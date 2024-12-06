@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/t225/Project1/src/triangulation.cpp
+CGAL/Exact_predicates_inexact_constructions_kernel.h
+-
+CGAL/Constrained_Delaunay_triangulation_2.h
+-
+CGAL/Delaunay_mesher_2.h
+-
+triangulation.h
+/home/t225/Project1/src/triangulation.h
+CGAL/draw_triangulation_2.h
+-
+
+/home/t225/Project1/src/triangulation.h
+vector
+-
+utility
+-
+

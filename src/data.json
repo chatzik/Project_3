@@ -1,0 +1,9 @@
+{
+    "instance_uid": "example_001",
+    "num_points": 5,
+    "points_x": [0, 1, 2, 3, 4],
+    "points_y": [0, 1, 2, 1, 0],
+    "region_boundary": [0, 1, 2, 3, 4],
+    "num_constraints": 2,
+    "additional_constraints": [[0, 2], [1, 3]]
+}
