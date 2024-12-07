@@ -132,56 +132,91 @@ Point insert_Steiner_point_in_convex_polygons(CDT &cdt, Polygon_2 &region_bounda
 // Συνάρτηση που επιστρέφει σημείο Steiner για μία από τις 5 στρατηγικές
 Point select_steiner_point(Point &a, Point &b, Point &c, int strategy, CDT &cdt, Polygon_2 convex_hull)
 {
-    switch (strategy)
+    Point steiner_point;
+    bool valid_point = false;
+    int attempts = 0;
+    const int max_attempts = 5;
+
+    while (!valid_point && attempts < max_attempts)
     {
-    case 0:
-    { // Περίκεντρο check
-        return circumcenter(a, b, c);
+        try
+        {
+            switch (strategy)
+            {
+            case 0: // Circumcenter
+                steiner_point = CGAL::circumcenter(a, b, c);
+                break;
+            case 1: // Centroid
+            {
+                double cx = (a.x() + b.x() + c.x()) / 3.0;
+                double cy = (a.y() + b.y() + c.y()) / 3.0;
+                steiner_point = Point(cx, cy);
+                break;
+            }
+            case 2: // Midpoint of longest edge
+            {
+                double d_ab = CGAL::squared_distance(a, b);
+                double d_bc = CGAL::squared_distance(b, c);
+                double d_ca = CGAL::squared_distance(c, a);
+                if (d_ab >= d_bc && d_ab >= d_ca)
+                    steiner_point = CGAL::midpoint(a, b);
+                else if (d_bc >= d_ab && d_bc >= d_ca)
+                    steiner_point = CGAL::midpoint(b, c);
+                else
+                    steiner_point = CGAL::midpoint(c, a);
+                break;
+            }
+            case 3: // Projection of obtuse angle vertex
+            {
+                if (is_obtuse_angle(b, a, c))
+                    steiner_point = project_point(b, c, a);
+                else if (is_obtuse_angle(a, b, c))
+                    steiner_point = project_point(a, c, b);
+                else if (is_obtuse_angle(a, c, b))
+                    steiner_point = project_point(a, b, c);
+                else
+                    steiner_point = CGAL::centroid(a, b, c); // Fallback to centroid if no obtuse angle
+                break;
+            }
+            case 4: // Convex polygon method
+                steiner_point = insert_Steiner_point_in_convex_polygons(cdt, convex_hull);
+                break;
+            default:
+                throw std::invalid_argument("Invalid strategy selected.");
+            }
+
+            // Check if the point is inside the triangle
+            if (CGAL::side_of_bounded_circle(a, b, c, steiner_point) == CGAL::ON_BOUNDED_SIDE) 
+            {
+                valid_point = true;
+            }
+            else
+            {
+                // If not inside, fall back to centroid
+                steiner_point = CGAL::centroid(a, b, c);
+                valid_point = true;
+            }
+        }
+        catch (const CGAL::Precondition_exception& e)
+        {
+            // If a CGAL precondition fails, try the next strategy
+            strategy = (strategy + 1) % 5;
+        }
+        catch (const std::exception &e)
+        {
+            // For any other exception, fall back to centroid
+            steiner_point = CGAL::centroid(a, b, c);
+            valid_point = true;
+        }
+
+        attempts++;
     }
-    case 1:
-    { // Κέντρο βάρους ενός τριγώνου
-        double cx = (a.x() + b.x() + c.x()) / 3.0;
-        double cy = (a.y() + b.y() + c.y()) / 3.0;
-        return Point(cx, cy);
-    }
-    case 2:
-    { // Μέσο της μεγαλύτερης ακμής check
-        double d_ab = squared_distance(a, b);
-        double d_bc = squared_distance(b, c);
-        double d_ca = squared_distance(c, a);
-        if (d_ab >= d_bc && d_ab >= d_ca)
-        {
-            return midpoint(a, b);
-        }
-        else if (d_bc >= d_ab && d_bc >= d_ca)
-        {
-            return midpoint(b, c);
-        }
-        else
-        {
-            return midpoint(c, a);
-        }
-    }
-    case 3:
-    { // Προβολή της κορυφής της αμβλείας γωνίας στην απέναντι πλευρά
-        if (is_obtuse_angle(b, a, c))
-        {
-            return project_point(b, c, a); // προβολή του A στην πλευρά B-C
-        }
-        else if (is_obtuse_angle(a, b, c))
-        {
-            return project_point(a, c, b); // του B στην πλευρά A-C
-        }
-        else if (is_obtuse_angle(a, c, b))
-        {
-            return project_point(a, b, c); // και του C στην πλευρά AB
-        }
-    }
-    case 4:
+
+    if (!valid_point)
     {
-        return insert_Steiner_point_in_convex_polygons(cdt, convex_hull);
+        // If we've exhausted all attempts, use the centroid as a last resort
+        steiner_point = CGAL::centroid(a, b, c);
     }
-    default:
-        throw invalid_argument("Invalid strategy selected.");
-    }
+
+    return steiner_point;
 }

@@ -158,9 +158,9 @@ State bfs_triangulation(CDT &initial_cdt, Polygon_2 &convex_hull, int &best_obtu
 }
 State sa_triangulation(CDT& cdt, const Polygon_2& convex_hull, int initial_obtuse, CDT& best_cdt, int max_iterations)
 {
-    const double alpha = 3.0; // Emphasis on reducing obtuse triangles
+    const double alpha = 5.0; // Emphasis on reducing obtuse triangles
     const double beta = 0.5;  // Penalty for adding Steiner points
-    const int L = 50; // Number of iterations at each temperature
+    const int L = 500; // Number of iterations at each temperature
 
     auto energy = [alpha, beta](const CDT& triangulation, int initial_vertices) {
         int obtuse_count = count_Obtuse_Angles(const_cast<CDT&>(triangulation));
@@ -183,34 +183,41 @@ State sa_triangulation(CDT& cdt, const Polygon_2& convex_hull, int initial_obtus
 
     double temperature = 1.0;
 
-    while (temperature >= 0) {
-        for (int i = 0; i < L; ++i) {
-            // Find all obtuse triangles
-            vector<CDT::Face_handle> obtuse_faces;
-            for (auto fit = current_state.cdt.finite_faces_begin(); fit != current_state.cdt.finite_faces_end(); ++fit) {
-                if (is_obtuse_triangle(fit)) {
-                    obtuse_faces.push_back(fit);
-                }
+while (temperature >= 0) {
+    for (int i = 0; i < L; ++i) {
+        // Find all obtuse triangles
+        vector<CDT::Face_handle> obtuse_faces;
+        for (auto fit = current_state.cdt.finite_faces_begin(); fit != current_state.cdt.finite_faces_end(); ++fit) {
+            if (is_obtuse_triangle(fit)) {
+                obtuse_faces.push_back(fit);
             }
+        }
 
-            if (obtuse_faces.empty()) break;  // No more obtuse triangles
+        if (obtuse_faces.empty()) break;  // No more obtuse triangles
 
-            // Randomly select an obtuse triangle
-            auto face = obtuse_faces[gen() % obtuse_faces.size()];
+        // Randomly select an obtuse triangle
+        std::uniform_int_distribution<> face_dis(0, obtuse_faces.size() - 1);
+        int selected_index = face_dis(gen);
+        auto selected_face = obtuse_faces[selected_index];
 
-            // Randomly select among 5 Steiner point locations
-            int strategy = gen() % 5;
-            Point steiner = select_steiner_point(face->vertex(0)->point(),
-                                                 face->vertex(1)->point(),
-                                                 face->vertex(2)->point(),
-                                                 strategy, current_state.cdt, convex_hull);
-            
-            if (convex_hull.bounded_side(steiner) == CGAL::ON_BOUNDED_SIDE || 
-                convex_hull.bounded_side(steiner) == CGAL::ON_BOUNDARY) {
+        Point a = selected_face->vertex(0)->point();
+        Point b = selected_face->vertex(1)->point();
+        Point c = selected_face->vertex(2)->point();
+
+        // Randomly select among 5 Steiner point locations
+        int strategy = gen() % 5;
+        Point steiner = select_steiner_point(a, b, c, strategy, current_state.cdt, convex_hull);
+
+        if (convex_hull.bounded_side(steiner) == CGAL::ON_BOUNDED_SIDE || 
+            convex_hull.bounded_side(steiner) == CGAL::ON_BOUNDARY) {
                 
-                // Create a new state with the Steiner point
-                State new_state = current_state;
-                new_state.cdt.insert(steiner);
+            
+            // Create a new state with the Steiner point
+            State new_state = current_state;
+            CDT::Vertex_handle v = new_state.cdt.insert(steiner);
+            
+            // Only proceed if the insertion was successful
+            if (v != CDT::Vertex_handle()) {
                 new_state.obtuse_count = count_Obtuse_Angles(new_state.cdt);
                 new_state.steiner_points++;
                 new_state.steiner_locations.push_back(steiner);
@@ -234,9 +241,12 @@ State sa_triangulation(CDT& cdt, const Polygon_2& convex_hull, int initial_obtus
             }
         }
 
-        // Decrease temperature
-        temperature -= 1.0 / L;
+        // Remove the processed face from obtuse_faces
+        obtuse_faces.erase(obtuse_faces.begin() + selected_index);
     }
+
+    temperature -= 1.0 / 0.95;
+}
 
     return best_state;
 }
@@ -272,15 +282,31 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     int best_obtuse = count_Obtuse_Angles(cdt);
     cout << "Initial obtuse angles: " << best_obtuse << endl;
     CDT best_cdt;
-    int max_depth = 10;
+    int max_depth = 12000;
+    State best_overall_state;
+    best_overall_state.obtuse_count = std::numeric_limits<int>::max();
 
-    State best = sa_triangulation(cdt, convex_hull, best_obtuse, best_cdt, max_depth);
-    printStateDetails(best);
-    draw(best.cdt);
+    for (size_t i = 0; i < 25; i++)
+{
+    cout << "Starting SA iteration " << i + 1 << " of 25" << endl;
+    State current_best = sa_triangulation(cdt, convex_hull, best_obtuse, best_cdt, max_depth);
+    
+    printStateDetails(current_best);
+
+    if (current_best.obtuse_count < best_overall_state.obtuse_count)
+    {
+        best_overall_state = current_best;
+        best_cdt = current_best.cdt;
+    }
+}
+
+cout << "Best overall state after 25 iterations:" << endl;
+printStateDetails(best_overall_state);
+
     TriangulationResult results;
-    results.obtuse_count = best.obtuse_count;
-    for (CDT::Finite_edges_iterator eit = best.cdt.finite_edges_begin();
-         eit != best.cdt.finite_edges_end(); ++eit)
+    results.obtuse_count = best_overall_state.obtuse_count;
+    for (CDT::Finite_edges_iterator eit = best_overall_state.cdt.finite_edges_begin();
+         eit != best_overall_state.cdt.finite_edges_end(); ++eit)
     {
         CDT::Face_handle face = eit->first;
         int index = eit->second;
@@ -300,8 +326,8 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     }
     // Collect Steiner points
     set<Point> original_points(points.begin(), points.end());
-    for (CDT::Finite_vertices_iterator vit = best.cdt.finite_vertices_begin();
-         vit != best.cdt.finite_vertices_end(); ++vit)
+    for (CDT::Finite_vertices_iterator vit = best_overall_state.cdt.finite_vertices_begin();
+         vit != best_overall_state.cdt.finite_vertices_end(); ++vit)
     {
         Point p = vit->point();
 
