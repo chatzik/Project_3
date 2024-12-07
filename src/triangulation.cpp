@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <random>
 #include <cmath>
-#include <cmath>
+
 
 //////////////////////////////////////////////////////////
 // kernel
@@ -156,10 +156,10 @@ State bfs_triangulation(CDT &initial_cdt, Polygon_2 &convex_hull, int &best_obtu
     }
     return best_state;
 }
-State sa_triangulation(CDT& cdt, const Polygon_2& convex_hull, int initial_obtuse, CDT& best_cdt, int max_iterations)
+State sa_triangulation(CDT& cdt, const Polygon_2& convex_hull, int initial_obtuse, CDT& best_cdt)
 {
     const double alpha = 5.0; // Emphasis on reducing obtuse triangles
-    const double beta = 0.5;  // Penalty for adding Steiner points
+    const double beta = 0.0;  // Penalty for adding Steiner points
     const int L = 500; // Number of iterations at each temperature
 
     auto energy = [alpha, beta](const CDT& triangulation, int initial_vertices) {
@@ -223,14 +223,16 @@ while (temperature >= 0) {
                 new_state.steiner_locations.push_back(steiner);
 
                 double new_energy = energy(new_state.cdt, cdt.number_of_vertices());
-                double delta_energy = new_energy - current_energy;
+                double delta_energy = new_energy - best_energy;
 
                 // Metropolis criterion
-                if (delta_energy < 0 || dis(gen) < exp(-delta_energy / temperature)) {
+                               // Metropolis criterion
+                if (delta_energy < 0 || exp(-delta_energy / temperature) > dis(gen)) {
                     current_state = new_state;
                     current_energy = new_energy;
+                    
 
-                    if (current_energy < best_energy) {
+                  if (current_energy < best_energy) {
                         best_state = current_state;
                         best_energy = current_energy;
                         best_cdt = current_state.cdt;
@@ -285,20 +287,23 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     int max_depth = 12000;
     State best_overall_state;
     best_overall_state.obtuse_count = std::numeric_limits<int>::max();
+    string method = "local";
+    if (method == "sa") {
+    for (size_t i = 0; i < 100; i++) {
+        cout << "Starting SA iteration " << i + 1 << " of 100" << endl;
+        State current_best = sa_triangulation(cdt, convex_hull, best_obtuse, best_cdt);
+        
+        printStateDetails(current_best);
 
-    for (size_t i = 0; i < 25; i++)
-{
-    cout << "Starting SA iteration " << i + 1 << " of 25" << endl;
-    State current_best = sa_triangulation(cdt, convex_hull, best_obtuse, best_cdt, max_depth);
-    
-    printStateDetails(current_best);
-
-    if (current_best.obtuse_count < best_overall_state.obtuse_count)
-    {
-        best_overall_state = current_best;
-        best_cdt = current_best.cdt;
+        if (current_best.obtuse_count < best_overall_state.obtuse_count) {
+            best_overall_state = current_best;
+            best_cdt = current_best.cdt;
+        }
     }
-}
+} else if (method == "local") {
+    State initial_state = {cdt, best_obtuse, 0, {}, {}};
+    best_overall_state = bfs_triangulation(cdt, convex_hull,  best_obtuse, best_cdt, max_depth);
+    best_cdt = best_overall_state.cdt;}
 
 cout << "Best overall state after 25 iterations:" << endl;
 printStateDetails(best_overall_state);
