@@ -161,8 +161,6 @@ State sa_triangulation(CDT& cdt, const Polygon_2& convex_hull, int initial_obtus
     const double alpha = 3.0; // Emphasis on reducing obtuse triangles
     const double beta = 0.5;  // Penalty for adding Steiner points
     const int L = 50; // Number of iterations at each temperature
-    double initial_temperature = 10.0;
-    double cooling_rate = 0.99;
 
     auto energy = [alpha, beta](const CDT& triangulation, int initial_vertices) {
         int obtuse_count = count_Obtuse_Angles(const_cast<CDT&>(triangulation));
@@ -183,11 +181,11 @@ State sa_triangulation(CDT& cdt, const Polygon_2& convex_hull, int initial_obtus
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0.0, 1.0);
 
-    double temperature = initial_temperature;
+    double temperature = 1.0;
 
-    for(int i = 0; i < max_iterations; ++i) {
-        for (int j = 0; j < L; ++j) {
-            // Select a random obtuse triangle
+    while (temperature >= 0) {
+        for (int i = 0; i < L; ++i) {
+            // Find all obtuse triangles
             vector<CDT::Face_handle> obtuse_faces;
             for (auto fit = current_state.cdt.finite_faces_begin(); fit != current_state.cdt.finite_faces_end(); ++fit) {
                 if (is_obtuse_triangle(fit)) {
@@ -196,58 +194,48 @@ State sa_triangulation(CDT& cdt, const Polygon_2& convex_hull, int initial_obtus
             }
 
             if (obtuse_faces.empty()) break;  // No more obtuse triangles
-    
+
+            // Randomly select an obtuse triangle
             auto face = obtuse_faces[gen() % obtuse_faces.size()];
 
-            // Select best Steiner point
-            Point steiner;
-            double best_local_energy = std::numeric_limits<double>::max();
-
-            for (int s = 0; s < 5; ++s) {
-                Point candidate = select_steiner_point(face->vertex(0)->point(),
-                                                       face->vertex(1)->point(),
-                                                       face->vertex(2)->point(),
-                                                       gen() % 5, current_state.cdt, convex_hull);
+            // Randomly select among 5 Steiner point locations
+            int strategy = gen() % 5;
+            Point steiner = select_steiner_point(face->vertex(0)->point(),
+                                                 face->vertex(1)->point(),
+                                                 face->vertex(2)->point(),
+                                                 strategy, current_state.cdt, convex_hull);
+            
+            if (convex_hull.bounded_side(steiner) == CGAL::ON_BOUNDED_SIDE || 
+                convex_hull.bounded_side(steiner) == CGAL::ON_BOUNDARY) {
                 
-                if (convex_hull.bounded_side(candidate) == CGAL::ON_BOUNDED_SIDE || 
-                    convex_hull.bounded_side(candidate) == CGAL::ON_BOUNDARY) {
-                    CDT temp_cdt = current_state.cdt;
-                    temp_cdt.insert(candidate);
-                    double local_energy = energy(temp_cdt, cdt.number_of_vertices());
-                    
-                    if (local_energy < best_local_energy) {
-                        best_local_energy = local_energy;
-                        steiner = candidate;
+                // Create a new state with the Steiner point
+                State new_state = current_state;
+                new_state.cdt.insert(steiner);
+                new_state.obtuse_count = count_Obtuse_Angles(new_state.cdt);
+                new_state.steiner_points++;
+                new_state.steiner_locations.push_back(steiner);
+
+                double new_energy = energy(new_state.cdt, cdt.number_of_vertices());
+                double delta_energy = new_energy - current_energy;
+
+                // Metropolis criterion
+                if (delta_energy < 0 || dis(gen) < exp(-delta_energy / temperature)) {
+                    current_state = new_state;
+                    current_energy = new_energy;
+
+                    if (current_energy < best_energy) {
+                        best_state = current_state;
+                        best_energy = current_energy;
+                        best_cdt = current_state.cdt;
+                        cout << "New best state: Obtuse count = " << best_state.obtuse_count 
+                             << ", Steiner points = " << best_state.steiner_points << endl;
                     }
-                }
-            }
-
-            // Create a new state with the best Steiner point
-            State new_state = current_state;
-            new_state.cdt.insert(steiner);
-            new_state.obtuse_count = count_Obtuse_Angles(new_state.cdt);
-            new_state.steiner_points++;
-            new_state.steiner_locations.push_back(steiner);
-
-            double new_energy = energy(new_state.cdt, cdt.number_of_vertices());
-            double delta_energy = new_energy - current_energy;
-
-            // Metropolis criterion
-            if (delta_energy < 0 || dis(gen) < exp(-delta_energy / temperature)) {
-                current_state = new_state;
-                current_energy = new_energy;
-
-                if (current_energy < best_energy) {
-                    best_state = current_state;
-                    best_energy = current_energy;
-                    best_cdt = current_state.cdt;
-                    cout << "New best state: Obtuse count = " << best_state.obtuse_count 
-                         << ", Steiner points = " << best_state.steiner_points << endl;
                 }
             }
         }
 
-       
+        // Decrease temperature
+        temperature -= 1.0 / L;
     }
 
     return best_state;
