@@ -12,5 +12,5 @@
 ],
 "method": "local",
 "parameters": {"alpha": 2.0, "beta": 0.5, "L": 5000 },
-"delaunay": true
+"delaunay": false
 }

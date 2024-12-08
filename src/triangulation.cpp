@@ -252,6 +252,7 @@ while (temperature >= 0) {
     return best_state;
 }
 
+
 // Κύρια συνάρτηση
 TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &points_y, const vector<int> &region_boundary, const vector<pair<int, int>> &additional_constraints,double alpha, double beta, int L,string& method,bool delaunay)
 {
