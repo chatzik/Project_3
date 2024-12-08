@@ -131,12 +131,12 @@ Point insert_Steiner_point_in_convex_polygons(CDT &cdt, Polygon_2 &region_bounda
 
 // Συνάρτηση που επιστρέφει σημείο Steiner για μία από τις 5 στρατηγικές
 Point select_steiner_point(Point &a, Point &b, Point &c, int strategy, CDT &cdt, Polygon_2 convex_hull)
-{
+{   
     Point steiner_point;
     bool valid_point = false;
     int attempts = 0;
     const int max_attempts = 5;
-
+    //μεχρι να υπαρχει valid point η να κανουμε τις μεγιστες επαναληψεις
     while (!valid_point && attempts < max_attempts)
     {
         try
@@ -153,7 +153,7 @@ Point select_steiner_point(Point &a, Point &b, Point &c, int strategy, CDT &cdt,
                 steiner_point = Point(cx, cy);
                 break;
             }
-            case 2: // Midpoint of longest edge
+            case 2: // Midpoint 
             {
                 double d_ab = CGAL::squared_distance(a, b);
                 double d_bc = CGAL::squared_distance(b, c);
@@ -166,7 +166,7 @@ Point select_steiner_point(Point &a, Point &b, Point &c, int strategy, CDT &cdt,
                     steiner_point = CGAL::midpoint(c, a);
                 break;
             }
-            case 3: // Projection of obtuse angle vertex
+            case 3: //  obtuse angle vertex
             {
                 if (is_obtuse_angle(b, a, c))
                     steiner_point = project_point(b, c, a);
@@ -175,31 +175,31 @@ Point select_steiner_point(Point &a, Point &b, Point &c, int strategy, CDT &cdt,
                 else if (is_obtuse_angle(a, c, b))
                     steiner_point = project_point(a, b, c);
                 else
-                    steiner_point = CGAL::centroid(a, b, c); // Fallback to centroid if no obtuse angle
+                    steiner_point = CGAL::centroid(a, b, c); // αν δεν υπαρχει αμβειλα κανουμε centroid
                 break;
             }
-            case 4: // Convex polygon method
+            case 4: // Convex polygon 
                 steiner_point = insert_Steiner_point_in_convex_polygons(cdt, convex_hull);
                 break;
             default:
                 throw std::invalid_argument("Invalid strategy selected.");
             }
 
-            // Check if the point is inside the triangle
+            // ελενχουμε αν ειναι μεσα στο τριγωνο
             if (CGAL::side_of_bounded_circle(a, b, c, steiner_point) == CGAL::ON_BOUNDED_SIDE) 
             {
                 valid_point = true;
             }
             else
             {
-                // If not inside, fall back to centroid
+                // αν δεν ειναι κανουμ cendroid
                 steiner_point = CGAL::centroid(a, b, c);
                 valid_point = true;
             }
         }
         catch (const CGAL::Precondition_exception& e)
         {
-            // If a CGAL precondition fails, try the next strategy
+            // αν αποτυχει μια προηποθεση τις cgal παρε αλλo strategy
             strategy = (strategy + 1) % 5;
         }
         catch (const std::exception &e)
@@ -208,13 +208,13 @@ Point select_steiner_point(Point &a, Point &b, Point &c, int strategy, CDT &cdt,
             steiner_point = CGAL::centroid(a, b, c);
             valid_point = true;
         }
-
+        //αυξανουμε τις επαναληψεις
         attempts++;
     }
 
     if (!valid_point)
     {
-        // If we've exhausted all attempts, use the centroid as a last resort
+        // αν δεν λειτουργει τπτ κανε centroid
         steiner_point = CGAL::centroid(a, b, c);
     }
 
