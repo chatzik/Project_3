@@ -316,6 +316,7 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     old_triangulate(points_x, points_y, region_boundary, additional_constraints);
    }
    //ετοιμαζουμε τα αποτελεσματα
+   draw(best_overall_state.cdt);
     TriangulationResult results;
     results.obtuse_count = best_overall_state.obtuse_count;
 
@@ -355,5 +356,6 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
         }
     }
     return results;
+    draw(best_overall_state.cdt);
 }
 //////////////////////////////////////////////////////////////////////////
