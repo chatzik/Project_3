@@ -37,7 +37,7 @@ struct State
     int steiner_points;
     vector<Point> steiner_locations;
     vector<int> strategies;
-
+    //Υπερφορτωση για το ==
     bool operator==(const State &other) const
     {
         return obtuse_count == other.obtuse_count &&
@@ -46,7 +46,7 @@ struct State
                strategies == other.strategies;
     }
 };
-
+//εκτυπωνουμε τα στοιχεία της κατάστάσης
 void printStateDetails(State &state)
 {
     cout << "Obtuse Count: " << state.obtuse_count << endl;
@@ -78,6 +78,7 @@ struct StateHash
         return hash_val;
     }
 };
+//ελενχος αν τα τριγωνα ειναι αμβλειγωνια
 bool is_obtuse_triangle(CDT::Face_handle face) {
     Point a = face->vertex(0)->point();
     Point b = face->vertex(1)->point();
@@ -85,7 +86,7 @@ bool is_obtuse_triangle(CDT::Face_handle face) {
     return is_obtuse_angle(a, b, c) || is_obtuse_angle(b, c, a) || is_obtuse_angle(c, a, b);
 }
 
-State bfs_triangulation(CDT &initial_cdt, Polygon_2 &convex_hull, int &best_obtuse, CDT &best_cdt, int max_iterations)
+State local_triangulation(CDT &initial_cdt, Polygon_2 &convex_hull, int &best_obtuse, CDT &best_cdt, int max_iterations)
 {
     queue<State> queue;
     unordered_set<State, StateHash> visited; // Χρησιμοποιούμε custom hash για State
@@ -97,12 +98,12 @@ State bfs_triangulation(CDT &initial_cdt, Polygon_2 &convex_hull, int &best_obtu
     int iteration_count = 0;
     best_cdt = initial_cdt;
 
-    // Εξερεύνηση μέσω BFS
+    // εξερεύνηση μεσω local
     while (!queue.empty() && iteration_count < max_iterations && best_state.obtuse_count > 0)
     {
         State current_state = queue.front();
         queue.pop();
-        // Αν η τρέχουσα κατάσταση είναι βέλτιστη, ενημερώνουμε τη βέλτιστη λύση
+        // αν η τρεχουσα κατάσταση ειναι βελτιστη, ενημερωνουμε τη βελτιστη λυση
         if (current_state.obtuse_count < best_state.obtuse_count)
         {
             best_cdt = current_state.cdt;
@@ -146,7 +147,7 @@ State bfs_triangulation(CDT &initial_cdt, Polygon_2 &convex_hull, int &best_obtu
                     }
                 }
             }
-            //}
+            //αυξηση του μετρητη αν δεν υπαρχει βελτιωση
             if (current_state.obtuse_count >= best_state.obtuse_count)
             {
                 iteration_count++;
@@ -234,8 +235,7 @@ while (temperature >= 0) {
                         best_state = current_state;
                         best_energy = current_energy;
                         best_cdt = current_state.cdt;
-                        cout << "New best state: Obtuse count = " << best_state.obtuse_count 
-                             << ", Steiner points = " << best_state.steiner_points << endl;
+                        
                     }
                 }
             }
@@ -295,7 +295,7 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     if (method == "sa") {
         //για καλυτερα αποτελσματα την κανουμε 10 φορες και επιστεφουμε την καλυτερη
     for (size_t i = 0; i < 10; i++) {
-        cout << "Starting SA iteration " << i + 1 << " of 10" << endl;
+        
         State current_best = sa_triangulation(cdt, convex_hull, best_obtuse, best_cdt, alpha ,beta ,L);
         
 
@@ -307,7 +307,7 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     //καλουμε την μεθοδο local
 } else if (method == "local") {
     State initial_state = {cdt, best_obtuse, 0, {}, {}};
-    best_overall_state = bfs_triangulation(cdt, convex_hull,  best_obtuse, best_cdt, max_depth);
+    best_overall_state = local_triangulation(cdt, convex_hull,  best_obtuse, best_cdt, max_depth);
     best_cdt = best_overall_state.cdt;
     }
    }
