@@ -77,9 +77,9 @@ int main()
 
 
     // Γραφουμε τα αποτελεσμένα στο output.json
-    std::ofstream out_file("output.json");
+    ofstream out_file("output.json");
     if (out_file.is_open()) {
-        out_file << std::setw(4) << output << std::endl;
+        out_file << setw(4) << output << endl;
         cout << "Data written to output.json" << endl;
     } else {
         cerr << "Error: Unable to open output.json for writing" << endl;

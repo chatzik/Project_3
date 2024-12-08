@@ -174,9 +174,9 @@ State sa_triangulation(CDT& cdt, const Polygon_2& convex_hull, int initial_obtus
     double current_energy = energy(cdt, cdt.number_of_vertices());
     double best_energy = current_energy;
     //δημιουργια τυχαιων αριθμων
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0.0, 1.0);
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<> dis(0.0, 1.0);
     //οριζουμε θερμοκρασια για την sa
     double temperature = 1.0;
 //main επαναληψη της sa
@@ -194,7 +194,7 @@ while (temperature >= 0) {
         if (obtuse_faces.empty()) break; 
 
         // διαλεγουμε ενα τυχαιο τριγωνο με αμβλειες
-        std::uniform_int_distribution<> face_dis(0, obtuse_faces.size() - 1);
+        uniform_int_distribution<> face_dis(0, obtuse_faces.size() - 1);
         int selected_index = face_dis(gen);
         auto selected_face = obtuse_faces[selected_index];
         //παιρνουμε τις κορυφες του  τριγωνου που επιλεξαμε
@@ -289,7 +289,7 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     CDT best_cdt;
     int max_depth = 12000;
     State best_overall_state;
-    best_overall_state.obtuse_count = std::numeric_limits<int>::max();
+    best_overall_state.obtuse_count = numeric_limits<int>::max();
    if (delaunay){
     //κανουμε την μεθοδο sa
     if (method == "sa") {

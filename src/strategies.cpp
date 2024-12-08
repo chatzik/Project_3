@@ -182,7 +182,7 @@ Point select_steiner_point(Point &a, Point &b, Point &c, int strategy, CDT &cdt,
                 steiner_point = insert_Steiner_point_in_convex_polygons(cdt, convex_hull);
                 break;
             default:
-                throw std::invalid_argument("Invalid strategy selected.");
+                throw invalid_argument("Invalid strategy selected.");
             }
 
             // ελενχουμε αν ειναι μεσα στο τριγωνο
