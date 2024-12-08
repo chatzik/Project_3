@@ -9,7 +9,7 @@ using json = nlohmann::json;
 using namespace std;
 
 // Συνάρτηση για φόρτωση των δεδομένων από το JSON αρχείο
-void loadDataFromJSON(const string &filename, vector<int> &points_x, vector<int> &points_y, vector<int> &region_boundary, vector<pair<int, int>> &additional_constraints, string &instance_uid,string& method)
+void loadDataFromJSON(const string &filename, vector<int> &points_x, vector<int> &points_y, vector<int> &region_boundary, vector<pair<int, int>> &additional_constraints, string &instance_uid,string& method,double& alpha,double& beta ,int& L)
 {
     // Άνοιγμα αρχείου JSON
     ifstream inputFile(filename);
@@ -30,6 +30,11 @@ void loadDataFromJSON(const string &filename, vector<int> &points_x, vector<int>
     region_boundary = j["region_boundary"].get<vector<int>>();
     instance_uid = j["instance_uid"].get<string>();
     additional_constraints = j["additional_constraints"].get<vector<pair<int, int>>>();
+    // Read parameters from items.json
+    auto params = j["parameters"];
+    alpha = params["alpha"].get<double>();
+    beta = params["beta"].get<double>();
+    L = params["L"].get<int>();
 }
 
 
@@ -43,12 +48,14 @@ int main()
     vector<int> points_y;
     vector<int> region_boundary;
     vector<pair<int, int>> additional_constraints;
+    double alpha, beta;
+    int L;
 
     // Κάλεσμα της συνάρτησης για φόρτωση δεδομένων
-    loadDataFromJSON("data.json", points_x, points_y, region_boundary, additional_constraints, instance_uid, method);
-
+    loadDataFromJSON("data.json", points_x, points_y, region_boundary, additional_constraints, instance_uid, method,alpha ,beta ,L);
+    cout<< "alpha: " << alpha << ", beta: " << beta << ", L: " << L << ", method: " << method <<  endl;
     // Εκτέλεση τριγωνοποίησης
-    TriangulationResult result = triangulate(points_x, points_y, region_boundary, additional_constraints);
+    TriangulationResult result = triangulate(points_x, points_y, region_boundary, additional_constraints,alpha, beta, L, method);
     json output;
     output["content_type"] = "CG_SHOP_2025_Solution";
     output["instance_uid"] = instance_uid;

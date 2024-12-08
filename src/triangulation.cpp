@@ -156,11 +156,9 @@ State bfs_triangulation(CDT &initial_cdt, Polygon_2 &convex_hull, int &best_obtu
     }
     return best_state;
 }
-State sa_triangulation(CDT& cdt, const Polygon_2& convex_hull, int initial_obtuse, CDT& best_cdt)
+State sa_triangulation(CDT& cdt, const Polygon_2& convex_hull, int initial_obtuse, CDT& best_cdt, double alpha ,double beta,int L)
 {
-    const double alpha = 5.0; // Emphasis on reducing obtuse triangles
-    const double beta = 0.0;  // Penalty for adding Steiner points
-    const int L = 500; // Number of iterations at each temperature
+    
 
     auto energy = [alpha, beta](const CDT& triangulation, int initial_vertices) {
         int obtuse_count = count_Obtuse_Angles(const_cast<CDT&>(triangulation));
@@ -254,7 +252,7 @@ while (temperature >= 0) {
 }
 
 // Κύρια συνάρτηση
-TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &points_y, const vector<int> &region_boundary, const vector<pair<int, int>> &additional_constraints)
+TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &points_y, const vector<int> &region_boundary, const vector<pair<int, int>> &additional_constraints,double alpha, double beta, int L,string& method)
 {
     CDT cdt;
     vector<Point> points;
@@ -287,11 +285,10 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     int max_depth = 12000;
     State best_overall_state;
     best_overall_state.obtuse_count = std::numeric_limits<int>::max();
-    string method = "local";
     if (method == "sa") {
-    for (size_t i = 0; i < 100; i++) {
-        cout << "Starting SA iteration " << i + 1 << " of 100" << endl;
-        State current_best = sa_triangulation(cdt, convex_hull, best_obtuse, best_cdt);
+    for (size_t i = 0; i < 10; i++) {
+        cout << "Starting SA iteration " << i + 1 << " of 10" << endl;
+        State current_best = sa_triangulation(cdt, convex_hull, best_obtuse, best_cdt, alpha ,beta ,L);
         
         printStateDetails(current_best);
 
@@ -305,7 +302,7 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     best_overall_state = bfs_triangulation(cdt, convex_hull,  best_obtuse, best_cdt, max_depth);
     best_cdt = best_overall_state.cdt;}
 
-cout << "Best overall state after 25 iterations:" << endl;
+cout << "Best overall state after 10 iterations:" << endl;
 printStateDetails(best_overall_state);
 
     TriangulationResult results;

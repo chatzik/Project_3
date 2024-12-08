@@ -13,8 +13,6 @@ CGAL/Constrained_Delaunay_triangulation_2.h
 -
 CGAL/Polygon_2.h
 -
-CGAL_CUSTOM_CONSTRAINED_DELAUNAY_TRIANGULATION_2.h
-/home/chatzos/project_2-master/src/CGAL_CUSTOM_CONSTRAINED_DELAUNAY_TRIANGULATION_2.h
 
 /home/chatzos/project_2-master/src/triangulation.cpp
 CGAL/Exact_predicates_inexact_constructions_kernel.h
