@@ -30,12 +30,13 @@ void loadDataFromJSON(const string &filename, vector<int> &points_x, vector<int>
     region_boundary = j["region_boundary"].get<vector<int>>();
     instance_uid = j["instance_uid"].get<string>();
     additional_constraints = j["additional_constraints"].get<vector<pair<int, int>>>();
-    // Read parameters from items.json
+    // διαβαζουμε τα parameters απο το json
     auto params = j["parameters"];
     alpha = params["alpha"].get<double>();
     beta = params["beta"].get<double>();
     L = params["L"].get<int>();
     delaunay = j["delaunay"].get<bool>();
+    //αν υπαρχει στο αρχειο delaunay προσθέτουμε την παράμετρο
     if (j.contains("delaunay")) {
         delaunay = j["delaunay"].get<bool>();
     }
@@ -58,9 +59,8 @@ int main()
 
     // Κάλεσμα της συνάρτησης για φόρτωση δεδομένων
     loadDataFromJSON("data.json", points_x, points_y, region_boundary, additional_constraints, instance_uid, method,alpha ,beta ,L,delaunay);
-    cout<< "alpha: " << alpha << ", beta: " << beta << ", L: " << L << ", method: " << method <<  endl;
+
     // Εκτέλεση τριγωνοποίησης
-    cout<<delaunay<<endl;
     TriangulationResult result = triangulate(points_x, points_y, region_boundary, additional_constraints,alpha, beta, L, method,delaunay);
     json output;
     output["content_type"] = "CG_SHOP_2025_Solution";
@@ -76,7 +76,7 @@ int main()
     output["edges"] = edges_json;
 
 
-    // Write to output.json file
+    // Γραφουμε τα αποτελεσμένα στο output.json
     std::ofstream out_file("output.json");
     if (out_file.is_open()) {
         out_file << std::setw(4) << output << std::endl;
@@ -84,11 +84,6 @@ int main()
     } else {
         cerr << "Error: Unable to open output.json for writing" << endl;
     }
-
-    // Debug: Print the JSON output
-    //cout << "JSON output:" << endl;
-   // cout << std::setw(4) << output << endl;
-
     
     return 0;
 }
