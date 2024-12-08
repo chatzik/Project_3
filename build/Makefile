@@ -311,6 +311,33 @@ src/main.cpp.s:
 	$(MAKE) -f CMakeFiles/triangulation.dir/build.make CMakeFiles/triangulation.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
+src/old_triangulation.o: src/old_triangulation.cpp.o
+
+.PHONY : src/old_triangulation.o
+
+# target to build an object file
+src/old_triangulation.cpp.o:
+	$(MAKE) -f CMakeFiles/triangulation.dir/build.make CMakeFiles/triangulation.dir/src/old_triangulation.cpp.o
+.PHONY : src/old_triangulation.cpp.o
+
+src/old_triangulation.i: src/old_triangulation.cpp.i
+
+.PHONY : src/old_triangulation.i
+
+# target to preprocess a source file
+src/old_triangulation.cpp.i:
+	$(MAKE) -f CMakeFiles/triangulation.dir/build.make CMakeFiles/triangulation.dir/src/old_triangulation.cpp.i
+.PHONY : src/old_triangulation.cpp.i
+
+src/old_triangulation.s: src/old_triangulation.cpp.s
+
+.PHONY : src/old_triangulation.s
+
+# target to generate assembly for a file
+src/old_triangulation.cpp.s:
+	$(MAKE) -f CMakeFiles/triangulation.dir/build.make CMakeFiles/triangulation.dir/src/old_triangulation.cpp.s
+.PHONY : src/old_triangulation.cpp.s
+
 src/strategies.o: src/strategies.cpp.o
 
 .PHONY : src/strategies.o
@@ -394,6 +421,9 @@ help:
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/old_triangulation.o"
+	@echo "... src/old_triangulation.i"
+	@echo "... src/old_triangulation.s"
 	@echo "... src/strategies.o"
 	@echo "... src/strategies.i"
 	@echo "... src/strategies.s"

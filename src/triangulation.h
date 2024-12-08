@@ -11,6 +11,6 @@ struct TriangulationResult {
     int obtuse_count;
 };
 // Δήλωση της συνάρτησης τριγωνοποίησης
-TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &points_y, const vector<int> &region_boundary, const vector<pair<int, int>> &additional_constraints,double alpha,double beta, int ,string& method);
+TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &points_y, const vector<int> &region_boundary, const vector<pair<int, int>> &additional_constraints,double alpha,double beta, int ,string& method,bool delaunay);
 
 #endif // TRIANGULATION_H

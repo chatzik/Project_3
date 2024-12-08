@@ -5,10 +5,16 @@ CMakeFiles/triangulation.dir/src/main.cpp.o: ../src/json.hpp
 CMakeFiles/triangulation.dir/src/main.cpp.o: ../src/main.cpp
 CMakeFiles/triangulation.dir/src/main.cpp.o: ../src/triangulation.h
 
+CMakeFiles/triangulation.dir/src/old_triangulation.cpp.o: ../src/old_triangulation.cpp
+CMakeFiles/triangulation.dir/src/old_triangulation.cpp.o: ../src/old_triangulation.h
+CMakeFiles/triangulation.dir/src/old_triangulation.cpp.o: ../src/strategies.h
+CMakeFiles/triangulation.dir/src/old_triangulation.cpp.o: ../src/triangulation.h
+
 CMakeFiles/triangulation.dir/src/strategies.cpp.o: ../src/strategies.cpp
 CMakeFiles/triangulation.dir/src/strategies.cpp.o: ../src/strategies.h
 CMakeFiles/triangulation.dir/src/strategies.cpp.o: ../src/triangulation.h
 
+CMakeFiles/triangulation.dir/src/triangulation.cpp.o: ../src/old_triangulation.h
 CMakeFiles/triangulation.dir/src/triangulation.cpp.o: ../src/strategies.h
 CMakeFiles/triangulation.dir/src/triangulation.cpp.o: ../src/triangulation.cpp
 CMakeFiles/triangulation.dir/src/triangulation.cpp.o: ../src/triangulation.h

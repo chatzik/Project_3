@@ -5,6 +5,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
   "/home/chatzos/project_2-master/src/main.cpp" "/home/chatzos/project_2-master/build/CMakeFiles/triangulation.dir/src/main.cpp.o"
+  "/home/chatzos/project_2-master/src/old_triangulation.cpp" "/home/chatzos/project_2-master/build/CMakeFiles/triangulation.dir/src/old_triangulation.cpp.o"
   "/home/chatzos/project_2-master/src/strategies.cpp" "/home/chatzos/project_2-master/build/CMakeFiles/triangulation.dir/src/strategies.cpp.o"
   "/home/chatzos/project_2-master/src/triangulation.cpp" "/home/chatzos/project_2-master/build/CMakeFiles/triangulation.dir/src/triangulation.cpp.o"
   )

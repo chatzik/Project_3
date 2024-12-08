@@ -6,15 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/chatzos/project_2-master/src/strategies.h
-CGAL/Exact_predicates_inexact_constructions_kernel.h
--
-CGAL/Constrained_Delaunay_triangulation_2.h
--
-CGAL/Polygon_2.h
--
-
-/home/chatzos/project_2-master/src/triangulation.cpp
+/home/chatzos/project_2-master/src/old_triangulation.cpp
 CGAL/Exact_predicates_inexact_constructions_kernel.h
 -
 CGAL/Constrained_Delaunay_triangulation_2.h
@@ -25,8 +17,6 @@ CGAL/Delaunay_mesher_2.h
 -
 triangulation.h
 /home/chatzos/project_2-master/src/triangulation.h
-strategies.h
-/home/chatzos/project_2-master/src/strategies.h
 CGAL/Polygon_2.h
 -
 CGAL/draw_triangulation_2.h
@@ -37,9 +27,25 @@ CGAL/convex_hull_2.h
 -
 unordered_map
 -
-random
--
 cmath
+-
+strategies.h
+/home/chatzos/project_2-master/src/strategies.h
+old_triangulation.h
+/home/chatzos/project_2-master/src/old_triangulation.h
+
+/home/chatzos/project_2-master/src/old_triangulation.h
+vector
+-
+utility
+-
+
+/home/chatzos/project_2-master/src/strategies.h
+CGAL/Exact_predicates_inexact_constructions_kernel.h
+-
+CGAL/Constrained_Delaunay_triangulation_2.h
+-
+CGAL/Polygon_2.h
 -
 
 /home/chatzos/project_2-master/src/triangulation.h

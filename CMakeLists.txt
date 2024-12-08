@@ -26,7 +26,7 @@ include_directories(${CGAL_INCLUDE_DIRS})
 link_directories( Qt5::Widgets ${CGAL_LIBRARY_DIRS})
 
 # Προσθήκη των πηγών
-add_executable(triangulation src/main.cpp src/triangulation.cpp src/strategies.cpp)
+add_executable(triangulation src/main.cpp src/triangulation.cpp src/strategies.cpp src/old_triangulation.cpp)
 
 # Προσθήκη του include φακέλου για το json.hpp
 target_include_directories(triangulation PRIVATE include)
