@@ -1,21 +1,21 @@
 Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
-Change Dir: /home/chatzos/project_2-master/build/CMakeFiles/CMakeTmp
+Change Dir: /home/chatzos/project_3-master/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_e157a/fast && /usr/bin/make -f CMakeFiles/cmTC_e157a.dir/build.make CMakeFiles/cmTC_e157a.dir/build
-make[1]: Entering directory '/home/chatzos/project_2-master/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_e157a.dir/src.c.o
-/usr/bin/cc   -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_e157a.dir/src.c.o   -c /home/chatzos/project_2-master/build/CMakeFiles/CMakeTmp/src.c
-Linking C executable cmTC_e157a
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e157a.dir/link.txt --verbose=1
-/usr/bin/cc  -DCMAKE_HAVE_LIBC_PTHREAD    CMakeFiles/cmTC_e157a.dir/src.c.o  -o cmTC_e157a 
-/usr/bin/ld: CMakeFiles/cmTC_e157a.dir/src.c.o: in function `main':
+Run Build Command(s):/usr/bin/make cmTC_41e07/fast && /usr/bin/make -f CMakeFiles/cmTC_41e07.dir/build.make CMakeFiles/cmTC_41e07.dir/build
+make[1]: Entering directory '/home/chatzos/project_3-master/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_41e07.dir/src.c.o
+/usr/bin/cc   -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_41e07.dir/src.c.o   -c /home/chatzos/project_3-master/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_41e07
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_41e07.dir/link.txt --verbose=1
+/usr/bin/cc  -DCMAKE_HAVE_LIBC_PTHREAD    CMakeFiles/cmTC_41e07.dir/src.c.o  -o cmTC_41e07 
+/usr/bin/ld: CMakeFiles/cmTC_41e07.dir/src.c.o: in function `main':
 src.c:(.text+0x46): undefined reference to `pthread_create'
 /usr/bin/ld: src.c:(.text+0x52): undefined reference to `pthread_detach'
 /usr/bin/ld: src.c:(.text+0x63): undefined reference to `pthread_join'
 collect2: error: ld returned 1 exit status
-make[1]: *** [CMakeFiles/cmTC_e157a.dir/build.make:87: cmTC_e157a] Error 1
-make[1]: Leaving directory '/home/chatzos/project_2-master/build/CMakeFiles/CMakeTmp'
-make: *** [Makefile:121: cmTC_e157a/fast] Error 2
+make[1]: *** [CMakeFiles/cmTC_41e07.dir/build.make:87: cmTC_41e07] Error 1
+make[1]: Leaving directory '/home/chatzos/project_3-master/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_41e07/fast] Error 2
 
 
 Source file was:

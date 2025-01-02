@@ -329,6 +329,10 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
         cdt.insert_constraint(points[constraint.first], points[constraint.second]);
     }
     //Μετραμε τα αμβλειγωνια τριγωνα στο CDT
+    if (method == "auto"){
+    string category = recognize_input_category(region_boundary, additional_constraints, points);
+    cout << "Input category: " << category << endl;
+    }
     int best_obtuse = count_Obtuse_Angles(cdt);
     cout << "Initial obtuse angles: " << best_obtuse << endl;
     //αρχικοποιηση για το best_CDT και state

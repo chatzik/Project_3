@@ -24,22 +24,43 @@ void loadDataFromJSON(const string &filename, vector<int> &points_x, vector<int>
     inputFile >> j;
 
     // Ανάγνωση των arrays από το JSON
-    method = j["method"].get<string>();
+    
+    if (!j.contains("method")){
+       method = "auto";
+    }else{
+        method = j["method"].get<string>();
+    }
     points_x = j["points_x"].get<vector<int>>();
     points_y = j["points_y"].get<vector<int>>();
     region_boundary = j["region_boundary"].get<vector<int>>();
     instance_uid = j["instance_uid"].get<string>();
     additional_constraints = j["additional_constraints"].get<vector<pair<int, int>>>();
     // διαβαζουμε τα parameters απο το json
+    // Check if parameters exist and read them
+if (j.contains("parameters")) {
     auto params = j["parameters"];
-    alpha = params["alpha"].get<double>();
-    beta = params["beta"].get<double>();
-    L = params["L"].get<int>();
-    delaunay = j["delaunay"].get<bool>();
-    //αν υπαρχει στο αρχειο delaunay προσθέτουμε την παράμετρο
-    if (j.contains("delaunay")) {
-        delaunay = j["delaunay"].get<bool>();
+    if (params.contains("alpha")) {
+        alpha = params["alpha"].get<double>();
     }
+    if (params.contains("beta")) {
+        beta = params["beta"].get<double>();
+    }
+    if (params.contains("L")) {
+        L = params["L"].get<int>();
+    }
+} else {
+    // Set default values or handle the absence of parameters
+    alpha = 1.0;  // Example default value
+    beta = 1.0;   // Example default value
+    L = 1000;     // Example default value
+    cout << "Warning: Parameters not found in JSON. Using default values." << endl;
+}
+   // Check if delaunay exists
+if (j.contains("delaunay")) {
+    delaunay = j["delaunay"].get<bool>();
+} else {
+    delaunay = true;  // Default value if not specified
+}
 }
 
 
