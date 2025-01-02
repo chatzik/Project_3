@@ -177,7 +177,7 @@ State sa_triangulation(CDT& cdt, const Polygon_2& convex_hull, int initial_obtus
     //δημιουργια τυχαιων αριθμων
     random_device rd;
     mt19937 gen(rd());
-    uniform_real_distribution<> dis(0.0, 1.0);
+    uniform_real_distribution<> dis(0.0, 100.0);
     //οριζουμε θερμοκρασια για την sa
     double temperature = 1.0;
 //main επαναληψη της sa
@@ -250,7 +250,53 @@ while (temperature >= 0) {
     //επιστεφουμε το καλυτερο state που βρηκαμε
     return best_state;
 }
+string recognize_input_category(const vector<int>& region_boundary, const vector<pair<int, int>>& additional_constraints, const vector<Point>& points) {
+    bool is_convex = true;
+    bool has_open_constraints = false;
+    bool has_closed_constraints = false;
+    bool is_axis_aligned = true;
 
+    // Check convexity and axis alignment
+    for (size_t i = 0; i < region_boundary.size(); ++i) {
+        size_t j = (i + 1) % region_boundary.size();
+        size_t k = (i + 2) % region_boundary.size();
+        Point p = points[region_boundary[i]];
+        Point q = points[region_boundary[j]];
+        Point r = points[region_boundary[k]];
+        
+        if (CGAL::orientation(p, q, r) == CGAL::LEFT_TURN) {
+            is_convex = false;
+        }
+        
+        if (p.x() != q.x() && p.y() != q.y()) {
+            is_axis_aligned = false;
+        }
+    }
+
+    // Check constraints
+    for (const auto& constraint : additional_constraints) {
+        bool on_boundary = false;
+        for (size_t i = 0; i < region_boundary.size(); ++i) {
+            size_t j = (i + 1) % region_boundary.size();
+            if ((constraint.first == region_boundary[i] && constraint.second == region_boundary[j]) ||
+                (constraint.first == region_boundary[j] && constraint.second == region_boundary[i])) {
+                on_boundary = true;
+                break;
+            }
+        }
+        if (on_boundary) {
+            has_closed_constraints = true;
+        } else {
+            has_open_constraints = true;
+        }
+    }
+
+    if (is_convex && additional_constraints.empty()) return "A";
+    if (is_convex && has_open_constraints && !has_closed_constraints) return "B";
+    if (is_convex && has_closed_constraints) return "C";
+    if (!is_convex && is_axis_aligned && additional_constraints.empty()) return "D";
+    return "E";
+}
 
 // Κύρια συνάρτηση
 TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &points_y, const vector<int> &region_boundary, const vector<pair<int, int>> &additional_constraints,double alpha, double beta, int L,string& method,bool delaunay)
@@ -290,6 +336,7 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     int max_depth = 12000;
     State best_overall_state;
     best_overall_state.obtuse_count = numeric_limits<int>::max();
+    auto start_time = std::chrono::high_resolution_clock::now();
    if (delaunay){
     //κανουμε την μεθοδο sa
     if (method == "sa") {
