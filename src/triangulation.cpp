@@ -264,33 +264,41 @@ string recognize_input_category(const vector<int> &region_boundary, const vector
     bool has_closed_constraints = false;
     bool is_axis_aligned = true;
 
-CGAL::Orientation initial_orientation = CGAL::COLLINEAR;
+    CGAL::Orientation initial_orientation = CGAL::COLLINEAR;
 
-// Check convexity and axis alignment
-for (size_t i = 0; i < region_boundary.size(); ++i) {
-    size_t j = (i + 1) % region_boundary.size();
-    size_t k = (i + 2) % region_boundary.size();
-    Point p = points[region_boundary[i]];
-    Point q = points[region_boundary[j]];
-    Point r = points[region_boundary[k]];
-    
-    CGAL::Orientation orientation = CGAL::orientation(p, q, r);
-    
-    if (orientation != CGAL::COLLINEAR) {
-        if (initial_orientation == CGAL::COLLINEAR) {
-            initial_orientation = orientation;
-        } else if (orientation != initial_orientation) {
-            is_convex = false;
-            break;
+    // Check convexity and axis alignment
+    for (size_t i = 0; i < region_boundary.size(); ++i)
+    {
+        size_t j = (i + 1) % region_boundary.size();
+        size_t k = (i + 2) % region_boundary.size();
+        Point p = points[region_boundary[i]];
+        Point q = points[region_boundary[j]];
+        Point r = points[region_boundary[k]];
+
+        ///////////////////////////
+        CGAL::Orientation orientation = CGAL::orientation(p, q, r);
+        ///////////////////////////
+
+        if (orientation != CGAL::COLLINEAR)
+        {
+            if (initial_orientation == CGAL::COLLINEAR)
+            {
+                initial_orientation = orientation;
+            }
+            else if (orientation != initial_orientation)
+            {
+                is_convex = false;
+                break;
+            }
+        }
+
+        if (p.x() != q.x() && p.y() != q.y())
+        {
+            is_axis_aligned = false;
         }
     }
-    
-    if (p.x() != q.x() && p.y() != q.y()) {
-        is_axis_aligned = false;
-    }
-}
 
-    // Check constraints
+    // Check constraints (additional)
     for (const auto &constraint : additional_constraints)
     {
         bool on_boundary = false;
@@ -315,10 +323,14 @@ for (size_t i = 0; i < region_boundary.size(); ++i) {
     }
 
     // Determine category
-    if (is_convex && additional_constraints.empty()) return "A";
-    if (is_convex && has_open_constraints && !has_closed_constraints) return "B";
-    if (is_convex && has_closed_constraints) return "C";
-    if (!is_convex && is_axis_aligned && additional_constraints.empty()) return "D";
+    if (is_convex && additional_constraints.empty())
+        return "A";
+    if (is_convex && has_open_constraints && !has_closed_constraints)
+        return "B";
+    if (is_convex && has_closed_constraints)
+        return "C";
+    if (!is_convex && is_axis_aligned && additional_constraints.empty())
+        return "D";
     return "E";
 }
 // Κύρια συνάρτηση
