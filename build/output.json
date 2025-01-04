@@ -1,7 +1,7 @@
 {
     "content_type": "CG_SHOP_2025_Solution",
     "edges": [],
-    "instance_uid": "point-set_100_05594822",
+    "instance_uid": "convex-polygon-with-closed-constraint",
     "method": "auto",
     "obtuse_count": 2147483647,
     "steiner_points_x": [],
