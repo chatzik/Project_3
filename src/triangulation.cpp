@@ -257,6 +257,146 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
     // επιστεφουμε το καλυτερο state που βρηκαμε
     return best_state;
 }
+double calculate_energy(const CDT& triangulation, const Point& steiner, double alpha, double beta) {
+    CDT temp_cdt = triangulation;
+    temp_cdt.insert(steiner);
+    int obtuse_count = count_Obtuse_Angles(temp_cdt);
+    int steiner_count = temp_cdt.number_of_vertices() - triangulation.number_of_vertices();
+    return alpha * obtuse_count + beta * steiner_count;
+}
+State aco_triangulation(CDT& cdt, const Polygon_2& convex_hull, int initial_obtuse, 
+                        double alpha, double beta, int L, int K, 
+                        double chi, double psi, double lambda) {
+    // Initialize random number generator
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0.0, 1.0);
+
+    // Initialize pheromone trails
+    std::map<Point, double> pheromones;
+    for (auto vit = cdt.finite_vertices_begin(); vit != cdt.finite_vertices_end(); ++vit) {
+        pheromones[vit->point()] = 1.0;  // Initial pheromone level
+    }
+
+    // Initialize best state
+    State best_state;
+    best_state.cdt = cdt;
+    best_state.obtuse_count = initial_obtuse;
+    best_state.steiner_points = 0;
+
+    int stagnation_counter = 0;
+    const int MAX_STAGNATION = 50;  // Maximum number of iterations without improvement
+
+    // Main ACO loop
+    for (int cycle = 0; cycle < L; ++cycle) {
+        std::vector<State> ant_solutions(K);
+        bool improved = false;
+
+        // Each ant constructs a solution
+        for (int ant = 0; ant < K; ++ant) {
+            State current_state = best_state;
+            int steps_without_improvement = 0;
+
+            // Ant's solution construction
+            for (int step = 0; step < 100 && steps_without_improvement < 10; ++step) {
+                // Find obtuse triangles
+                std::vector<CDT::Face_handle> obtuse_faces;
+                for (auto fit = current_state.cdt.finite_faces_begin(); 
+                     fit != current_state.cdt.finite_faces_end(); ++fit) {
+                    if (is_obtuse_triangle(fit)) {
+                        obtuse_faces.push_back(fit);
+                    }
+                }
+
+                if (obtuse_faces.empty()) break;
+
+                // Choose a random obtuse triangle
+                CDT::Face_handle chosen_face = obtuse_faces[gen() % obtuse_faces.size()];
+
+                // Generate Steiner point candidates
+                std::vector<Point> candidates;
+                for (int i = 0; i < 5; ++i) {
+                    Point a = chosen_face->vertex(0)->point();
+                    Point b = chosen_face->vertex(1)->point();
+                    Point c = chosen_face->vertex(2)->point();
+                    Point steiner = select_steiner_point(a, b, c, i, current_state.cdt, convex_hull);
+                    if (convex_hull.bounded_side(steiner) != CGAL::ON_UNBOUNDED_SIDE) {
+                        candidates.push_back(steiner);
+                    }
+                }
+
+                if (candidates.empty()) continue;
+
+                // Choose Steiner point based on pheromone and heuristic
+                std::vector<double> probabilities;
+                double sum = 0.0;
+                for (const Point& candidate : candidates) {
+                    double pheromone = pheromones[candidate];
+                    double heuristic = 1.0 / (1 + calculate_energy(current_state.cdt, candidate, alpha, beta));
+                    double probability = std::pow(pheromone, chi) * std::pow(heuristic, psi);
+                    probabilities.push_back(probability);
+                    sum += probability;
+                }
+
+                double random_value = dis(gen) * sum;
+                int chosen_index = 0;
+                for (size_t i = 0; i < probabilities.size(); ++i) {
+                    random_value -= probabilities[i];
+                    if (random_value <= 0) {
+                        chosen_index = i;
+                        break;
+                    }
+                }
+
+                // Insert chosen Steiner point
+                Point chosen_steiner = candidates[chosen_index];
+                CDT::Vertex_handle v = current_state.cdt.insert(chosen_steiner);
+                if (v != CDT::Vertex_handle()) {
+                    current_state.steiner_points++;
+                    current_state.steiner_locations.push_back(chosen_steiner);
+                    int new_obtuse_count = count_Obtuse_Angles(current_state.cdt);
+                    if (new_obtuse_count < current_state.obtuse_count) {
+                        current_state.obtuse_count = new_obtuse_count;
+                        steps_without_improvement = 0;
+                    } else {
+                        steps_without_improvement++;
+                    }
+                }
+            }
+
+            ant_solutions[ant] = current_state;
+
+            // Update best state if necessary
+            if (current_state.obtuse_count < best_state.obtuse_count) {
+                best_state = current_state;
+                improved = true;
+                stagnation_counter = 0;
+            }
+        }
+
+        // Update pheromones
+        for (auto& p : pheromones) {
+            p.second *= (1 - lambda);  // Evaporation
+        }
+
+        for (const State& solution : ant_solutions) {
+            double delta = 1.0 / (1 + calculate_energy(solution.cdt, Point(0,0), alpha, beta));
+            for (const Point& steiner : solution.steiner_locations) {
+                pheromones[steiner] += delta;
+            }
+        }
+
+        if (!improved) {
+            stagnation_counter++;
+            if (stagnation_counter >= MAX_STAGNATION) {
+                break;  // Terminate if no improvement for MAX_STAGNATION iterations
+            }
+        }
+    }
+
+    return best_state;
+}
+
 string recognize_input_category(const vector<int> &region_boundary, const vector<pair<int, int>> &additional_constraints, const vector<Point> &points)
 {
     bool is_convex = true;
@@ -389,6 +529,17 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
         {
             State initial_state = {cdt, best_obtuse, 0, {}, {}};
             best_overall_state = local_triangulation(cdt, convex_hull, best_obtuse, best_cdt, max_depth);
+            best_cdt = best_overall_state.cdt;
+        
+        } else if (method == "aco") {
+            // ACO parameters
+            int K = 10;  // Number of ants
+            double chi = 1.0;  // Pheromone importance
+            double psi = 2.0;  // Heuristic importance
+            double lambda = 0.1;  // Evaporation rate
+
+            best_overall_state = aco_triangulation(cdt, convex_hull, best_obtuse, 
+                                                   alpha, beta, L, K, chi, psi, lambda);
             best_cdt = best_overall_state.cdt;
         }
     }
