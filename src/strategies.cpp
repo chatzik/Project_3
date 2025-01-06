@@ -12,7 +12,9 @@
 #include <CGAL/convex_hull_2.h>
 #include <unordered_map>
 #include <cmath>
+#include <random>
 
+using namespace std;
 //////////////////////////////////////////////////////////
 // kernel
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
@@ -126,17 +128,38 @@ Point insert_Steiner_point_in_convex_polygons(CDT &cdt, Polygon_2 &region_bounda
         }
     }
 }
+////////////////////////////////////////////////////////////
+// Συνάρτηση που εισάγει τυχαία steiner point με ομοιόμορφη κατανομή μέσα στο κυρτό περίβλημα ενός γράφου
+Point generate_random_steiner_point(const Polygon_2 &convex_hull)
+{
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<> dis(0.0, 1.0);
+    double x = dis(gen) * (convex_hull.bbox().xmax() - convex_hull.bbox().xmin()) + convex_hull.bbox().xmin();
+    double y = dis(gen) * (convex_hull.bbox().ymax() - convex_hull.bbox().ymin()) + convex_hull.bbox().ymin();
+    Point random_steiner(x, y);
+
+    // Ensure the point is inside the convex hull
+    while (convex_hull.bounded_side(random_steiner) == CGAL::ON_UNBOUNDED_SIDE)
+    {
+        x = dis(gen) * (convex_hull.bbox().xmax() - convex_hull.bbox().xmin()) + convex_hull.bbox().xmin();
+        y = dis(gen) * (convex_hull.bbox().ymax() - convex_hull.bbox().ymin()) + convex_hull.bbox().ymin();
+        random_steiner = Point(x, y);
+    }
+
+    return random_steiner;
+}
 
 ///////////////////////////////////////////////////////////
 
 // Συνάρτηση που επιστρέφει σημείο Steiner για μία από τις 5 στρατηγικές
 Point select_steiner_point(Point &a, Point &b, Point &c, int strategy, CDT &cdt, Polygon_2 convex_hull)
-{   
+{
     Point steiner_point;
     bool valid_point = false;
     int attempts = 0;
     const int max_attempts = 5;
-    //μεχρι να υπαρχει valid point η να κανουμε τις μεγιστες επαναληψεις
+    // μεχρι να υπαρχει valid point η να κανουμε τις μεγιστες επαναληψεις
     while (!valid_point && attempts < max_attempts)
     {
         try
@@ -153,7 +176,7 @@ Point select_steiner_point(Point &a, Point &b, Point &c, int strategy, CDT &cdt,
                 steiner_point = Point(cx, cy);
                 break;
             }
-            case 2: // Midpoint 
+            case 2: // Midpoint
             {
                 double d_ab = CGAL::squared_distance(a, b);
                 double d_bc = CGAL::squared_distance(b, c);
@@ -178,7 +201,7 @@ Point select_steiner_point(Point &a, Point &b, Point &c, int strategy, CDT &cdt,
                     steiner_point = CGAL::centroid(a, b, c); // αν δεν υπαρχει αμβειλα κανουμε centroid
                 break;
             }
-            case 4: // Convex polygon 
+            case 4: // Convex polygon
                 steiner_point = insert_Steiner_point_in_convex_polygons(cdt, convex_hull);
                 break;
             default:
@@ -186,7 +209,7 @@ Point select_steiner_point(Point &a, Point &b, Point &c, int strategy, CDT &cdt,
             }
 
             // ελενχουμε αν ειναι μεσα στο τριγωνο
-            if (CGAL::side_of_bounded_circle(a, b, c, steiner_point) == CGAL::ON_BOUNDED_SIDE) 
+            if (CGAL::side_of_bounded_circle(a, b, c, steiner_point) == CGAL::ON_BOUNDED_SIDE)
             {
                 valid_point = true;
             }
@@ -197,7 +220,7 @@ Point select_steiner_point(Point &a, Point &b, Point &c, int strategy, CDT &cdt,
                 valid_point = true;
             }
         }
-        catch (const CGAL::Precondition_exception& e)
+        catch (const CGAL::Precondition_exception &e)
         {
             // αν αποτυχει μια προηποθεση τις cgal παρε αλλo strategy
             strategy = (strategy + 1) % 5;
@@ -208,7 +231,7 @@ Point select_steiner_point(Point &a, Point &b, Point &c, int strategy, CDT &cdt,
             steiner_point = CGAL::centroid(a, b, c);
             valid_point = true;
         }
-        //αυξανουμε τις επαναληψεις
+        // αυξανουμε τις επαναληψεις
         attempts++;
     }
 

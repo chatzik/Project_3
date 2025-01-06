@@ -252,7 +252,7 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
             obtuse_faces.erase(obtuse_faces.begin() + selected_index);
         }
         // χαμηλωνουμε την θερμοκρασια
-        temperature -= 1.0 / 0.95;
+        temperature -= 0.005;
     }
     // επιστεφουμε το καλυτερο state που βρηκαμε
     return best_state;
@@ -498,6 +498,7 @@ string recognize_input_category(const vector<int> &region_boundary, const vector
         return "D";
     return "E";
 }
+
 // Κύρια συνάρτηση
 TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &points_y, const vector<int> &region_boundary, const vector<pair<int, int>> &additional_constraints, double alpha, double beta, int L, string &method, bool delaunay)
 {
