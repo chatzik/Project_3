@@ -12,6 +12,7 @@
 #include <random>
 #include <cmath>
 #include "old_triangulation.h"
+#include <chrono>
 
 //////////////////////////////////////////////////////////
 // kernel
@@ -27,7 +28,7 @@ typedef CDT::Point Point;
 typedef CGAL::Polygon_2<K> Polygon_2;
 typedef CDT::Face_handle Face_handle;
 using namespace std;
-
+bool randomization = false;
 // State definition
 struct State
 {
@@ -36,6 +37,7 @@ struct State
     int steiner_points;
     vector<Point> steiner_locations;
     vector<int> strategies;
+    vector<int> obtuse_history;
     // Υπερφορτωση για το ==
     bool operator==(const State &other) const
     {
@@ -45,12 +47,36 @@ struct State
                strategies == other.strategies;
     }
 };
+double calculate_convergence_rate(int n, int obtuse_n, int obtuse_n_plus_1) {
+    if (n == 0 || obtuse_n == obtuse_n_plus_1) {
+        return 0.0;  // Avoid division by zero or log of 1
+    }
+    double ln_obtuse_ratio = log(static_cast<double>(obtuse_n_plus_1)) - log(static_cast<double>(obtuse_n));
+    double ln_n_ratio = log(static_cast<double>(n + 1)) - log(static_cast<double>(n));
+    return ln_obtuse_ratio / ln_n_ratio;
+}
+double calculate_energy(const State& state, double alpha, double beta) {
+    return alpha * state.obtuse_count + beta * state.steiner_points;
+}
+Point generate_random_point_within_hull(const Polygon_2 &convex_hull)
+{
+    // Generate a random point inside the bounding box of the convex hull
+    auto bbox = CGAL::bbox_2(convex_hull.vertices_begin(), convex_hull.vertices_end());
+    double x = CGAL::to_double(bbox.xmin()) + (rand() / (RAND_MAX + 1.0)) * (CGAL::to_double(bbox.xmax()) - CGAL::to_double(bbox.xmin()));
+    double y = CGAL::to_double(bbox.ymin()) + (rand() / (RAND_MAX + 1.0)) * (CGAL::to_double(bbox.ymax()) - CGAL::to_double(bbox.ymin()));
+    return Point(x, y);
+}
+
 // εκτυπωνουμε τα στοιχεία της κατάστάσης
 void printStateDetails(State &state)
 {
     cout << "Obtuse Count: " << state.obtuse_count << endl;
     cout << "Steiner Points: " << state.steiner_points << endl;
     cout << endl;
+}
+// Function to compare two points with epsilon tolerance
+bool points_equal(const Point& a, const Point& b, double epsilon = 1e-10) {
+    return (std::abs(a.x() - b.x()) < epsilon) && (std::abs(a.y() - b.y()) < epsilon);
 }
 // Συνάρτηση για τη σύγκριση δύο καταστάσεων State
 bool compareStates(const State &a, const State &b)
@@ -89,105 +115,169 @@ bool is_obtuse_triangle(CDT::Face_handle face)
 State local_triangulation(CDT &initial_cdt, Polygon_2 &convex_hull, int &best_obtuse, CDT &best_cdt, int max_iterations)
 {
     queue<State> queue;
-    unordered_set<State, StateHash> visited; // Χρησιμοποιούμε custom hash για State
-    // Αρχικοποίηση με την αρχική κατάσταση
-    State initial_state = {initial_cdt, count_Obtuse_Angles(initial_cdt), 0, {}, {}};
+    unordered_set<State, StateHash> visited; // Custom hash for State
+
+    // Initialize with the initial state
+    State initial_state = {initial_cdt, count_Obtuse_Angles(initial_cdt), 0, {}, {},{count_Obtuse_Angles(initial_cdt)}};
     State best_state = initial_state;
     queue.push(initial_state);
     visited.insert(initial_state);
     int iteration_count = 0;
+    int stagnation_count = 0; // Counter for stagnation
     best_cdt = initial_cdt;
+    
 
-    // εξερεύνηση μεσω local
+    // Exploration via local strategies
     while (!queue.empty() && iteration_count < max_iterations && best_state.obtuse_count > 0)
     {
         State current_state = queue.front();
         queue.pop();
-        // αν η τρεχουσα κατάσταση ειναι βελτιστη, ενημερωνουμε τη βελτιστη λυση
+
+        // If the current state is better, update the best solution
         if (current_state.obtuse_count < best_state.obtuse_count)
         {
             best_cdt = current_state.cdt;
             best_state = current_state;
-            iteration_count -= 10; // Επαναφορά του μετρητή επαναλήψεων επειδή βελτιώθηκε
+            best_state.steiner_points ++;
+            iteration_count -= 10; // Reset iteration count due to improvement
+            stagnation_count = 0;  // Reset stagnation count
+            best_state.obtuse_history.push_back(best_state.obtuse_count);
+            
         }
-        // Αν φτάσουμε στο μέγιστο βάθος ή δεν έχουμε άλλες αμβλείες γωνίες, σταματάμε
+
+        // If max iterations reached or no obtuse angles remain, stop
         if (iteration_count >= max_iterations || best_state.obtuse_count == 0)
             return best_state;
-        // Εξερεύνηση όλων των τριγώνων με αμβλείες γωνίες
+
+        // Explore all triangles with obtuse angles
+        bool improvement_found = false;
         for (auto fit = current_state.cdt.finite_faces_begin(); fit != current_state.cdt.finite_faces_end(); ++fit)
         {
             Point a = fit->vertex(0)->point();
             Point b = fit->vertex(1)->point();
             Point c = fit->vertex(2)->point();
 
-            //  Δοκιμή όλων των στρατηγικών
+            // Test all strategies
             for (int strategy = 0; strategy < 5; ++strategy)
             {
                 Point steiner = select_steiner_point(a, b, c, strategy, current_state.cdt, convex_hull);
-                // Έλεγχος αν το σημείο είναι μέσα στο κυρτό περίβλημα
+                
+                // Check if the point is within the convex hull
                 if (convex_hull.bounded_side(steiner) == CGAL::ON_BOUNDED_SIDE || convex_hull.bounded_side(steiner) == CGAL::ON_BOUNDARY)
                 {
                     CDT temp_cdt = current_state.cdt;
                     temp_cdt.insert(steiner);
                     int new_obtuse = count_Obtuse_Angles(temp_cdt);
-                    // Δημιουργούμε μια νέα κατάσταση και ελέγχουμε αν υπάρχει ήδη
-                    State new_state = {temp_cdt, new_obtuse, current_state.steiner_points + 1, {}, {}};
-                    if (new_obtuse <= initial_state.obtuse_count)
+
+                    // Create a new state
+                    State new_state = {temp_cdt, new_obtuse, current_state.steiner_points + 1, {}, {}, current_state.obtuse_history};
+                    new_state.obtuse_history.push_back(new_obtuse);
+                    // If the new state is better and hasn't been visited
+                    if (new_obtuse <= initial_state.obtuse_count && visited.find(new_state) == visited.end())
                     {
-                        // Αν η νέα κατάσταση δεν έχει επισκεφθεί ξανά, την προσθέτουμε
-                        if (visited.find(new_state) == visited.end())
-                        {
-                            queue.push(new_state);
-                            visited.insert(new_state);
-                        }
-                    }
-                    else
-                    {
+                        queue.push(new_state);
                         visited.insert(new_state);
+                        improvement_found = true;
                     }
                 }
             }
-            // αυξηση του μετρητη αν δεν υπαρχει βελτιωση
-            if (current_state.obtuse_count >= best_state.obtuse_count)
+        }
+
+        // Randomization: Trigger after 200 consecutive stagnation iterations
+        if(!improvement_found && randomization)
+        {
+            stagnation_count++;
+            if (stagnation_count >= 200)
             {
-                iteration_count++;
+                Point random_point = generate_random_point_within_hull(convex_hull);
+                cout << "Randomization triggered. Generated random point: (" << random_point.x() << ", " << random_point.y() << ")\n";
+
+                if (convex_hull.bounded_side(random_point) == CGAL::ON_BOUNDED_SIDE || convex_hull.bounded_side(random_point) == CGAL::ON_BOUNDARY)
+                                {
+                    // Insert the random point into the best CDT
+                    best_cdt.insert(random_point);
+                    int new_obtuse = count_Obtuse_Angles(best_cdt);
+
+                    // Update the best state
+                    best_state.cdt = best_cdt;
+                    best_state.obtuse_count = new_obtuse;
+                    best_state.steiner_points++;
+                    best_state.steiner_locations.push_back(random_point);
+                    cout << "New best solution found: Obtuse Count = " << best_state.obtuse_count << endl;
+                    best_state.obtuse_history.push_back(new_obtuse);
+                    cout<< "after the first update of best_state.obtuse_history"<<endl;
+
+
+
+                    stagnation_count = 0; // Reset stagnation count after randomization
+                    cout << "Random point accepted and added to the best CDT. New obtuse count: " << new_obtuse << "\n";
+                }
+                else
+                {
+                    cout << "Random point is outside the convex hull.\n";
+                }
             }
         }
+        
+        // Increment the iteration count if no improvement
+        if (current_state.obtuse_count >= best_state.obtuse_count)
+        {
+            iteration_count++;
+        }
     }
+
     return best_state;
 }
+
+
 State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtuse, CDT &best_cdt, double alpha, double beta, int L)
 {
-
-    // οριζουμε την ενεργεια ανάλυσης για τα states
+    // Energy function for evaluating states
     auto energy = [alpha, beta](const CDT &triangulation, int initial_vertices)
     {
         int obtuse_count = count_Obtuse_Angles(const_cast<CDT &>(triangulation));
         int steiner_count = triangulation.number_of_vertices() - initial_vertices;
         return alpha * obtuse_count + beta * steiner_count;
     };
-    // αρχικοποιουμε την τρεχουσα κατασταση  CD
+
+    // Initialize the current state
     State current_state;
     current_state.cdt = cdt;
     current_state.obtuse_count = initial_obtuse;
     current_state.steiner_points = 0;
-    // βαζουμε το τρεχουση κατασταση σαν καλυτερη
+    current_state.obtuse_history.push_back(initial_obtuse);
+
+    // Set the initial state as the best state
     State best_state = current_state;
     double current_energy = energy(cdt, cdt.number_of_vertices());
     double best_energy = current_energy;
-    // δημιουργια τυχαιων αριθμων
+
+    // Random number generation setup
     random_device rd;
     mt19937 gen(rd());
     uniform_real_distribution<> dis(0.0, 100.0);
-    // οριζουμε θερμοκρασια για την sa
+
+    // Temperature for simulated annealing
     double temperature = 1.0;
-    // main επαναληψη της sa
+
+    // Counter for stagnation
+    int stagnation_count = 0;
+
+    // Main loop of simulated annealing
     while (temperature >= 0)
     {
-        // κανουμε  L επαναληψεις για καθε θεμοκρασια
+        // Perform L iterations for each temperature
         for (int i = 0; i < L; ++i)
         {
-            // βρισκουμε ολα τα τριγωνα με αμβλειες
+            //stagnation_count++;
+    
+            if (stagnation_count >= 100000){
+                cout << "SA Stopping due to stagnation.\n";
+                break;
+            }else{
+                stagnation_count++;
+            }
+            // Identify all obtuse triangles
             vector<CDT::Face_handle> obtuse_faces;
             for (auto fit = current_state.cdt.finite_faces_begin(); fit != current_state.cdt.finite_faces_end(); ++fit)
             {
@@ -196,69 +286,115 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
                     obtuse_faces.push_back(fit);
                 }
             }
-            // Αν δεν εχουμε ουτε ενα τριγωνο με αμβλειες τερματισε
+
+            // If no obtuse triangles remain, terminate
             if (obtuse_faces.empty())
                 break;
 
-            // διαλεγουμε ενα τυχαιο τριγωνο με αμβλειες
+            // Select a random obtuse triangle
             uniform_int_distribution<> face_dis(0, obtuse_faces.size() - 1);
             int selected_index = face_dis(gen);
             auto selected_face = obtuse_faces[selected_index];
-            // παιρνουμε τις κορυφες του  τριγωνου που επιλεξαμε
+
+            // Retrieve the vertices of the selected triangle
             Point a = selected_face->vertex(0)->point();
             Point b = selected_face->vertex(1)->point();
             Point c = selected_face->vertex(2)->point();
 
-            // επιλεγουμε μια τυχαια στρατηγικη απο τις 5
+            // Choose a random strategy out of 5
             int strategy = gen() % 5;
             Point steiner = select_steiner_point(a, b, c, strategy, current_state.cdt, convex_hull);
-            // ελενχουμε αν το σημείο είναι μέσα η πανω στο boundary
+
+            // Check if the Steiner point is inside or on the boundary
             if (convex_hull.bounded_side(steiner) == CGAL::ON_BOUNDED_SIDE ||
                 convex_hull.bounded_side(steiner) == CGAL::ON_BOUNDARY)
             {
-
-                // δημιουργουμε νεο state με το steiner point
+                // Create a new state with the Steiner point
                 State new_state = current_state;
                 CDT::Vertex_handle v = new_state.cdt.insert(steiner);
-
-                // προχωραμε μονο αν η εισαγωγη ηταν επιτυχεις
+                 // Increment stagnation count
+                // Proceed only if the insertion was successful
                 if (v != CDT::Vertex_handle())
                 {
                     new_state.obtuse_count = count_Obtuse_Angles(new_state.cdt);
                     new_state.steiner_points++;
                     new_state.steiner_locations.push_back(steiner);
-                    // υπολογιζω την ενεργεια του νεου state
+                    new_state.obtuse_history.push_back(new_state.obtuse_count);
+                    // Compute the energy of the new state
                     double new_energy = energy(new_state.cdt, cdt.number_of_vertices());
                     double delta_energy = new_energy - best_energy;
 
-                    // κρητιριο Metropolis
-
+                    // Metropolis criterion
                     if (delta_energy < 0 || exp(-delta_energy / temperature) > dis(gen))
                     {
                         current_state = new_state;
                         current_energy = new_energy;
 
-                        // αν το καινουργιο state ειναι καλυτερο απο το παλιο αλαλξε τα
+                        // Update the best state if the new state is better
                         if (current_energy < best_energy)
                         {
+                            
                             best_state = current_state;
                             best_energy = current_energy;
                             best_cdt = current_state.cdt;
+                            best_state.obtuse_history.push_back (best_state.obtuse_count);
+                            stagnation_count = 0; // Reset stagnation count
+                            
                         }
                     }
                 }
             }
-            // αφαιρουμε το τριγωνο απο το obtuse_faces
+
+            // Remove the triangle from the obtuse_faces list
             obtuse_faces.erase(obtuse_faces.begin() + selected_index);
         }
-        // χαμηλωνουμε την θερμοκρασια
+
+        // Randomization: Insert a random Steiner point if stagnation persists for 100 iterations
+        //cout << "SA Stagnation count: " << stagnation_count << "\n";
+        if (stagnation_count >= 100 && randomization)
+        {
+            Point random_point = generate_random_point_within_hull(convex_hull);
+            cout << "SA Randomization triggered. Generated random point: (" << random_point.x() << ", " << random_point.y() << ")\n";
+
+            if (convex_hull.bounded_side(random_point) == CGAL::ON_BOUNDED_SIDE ||
+                convex_hull.bounded_side(random_point) == CGAL::ON_BOUNDARY)
+            {
+                CDT::Vertex_handle v = current_state.cdt.insert(random_point);
+                if (v != CDT::Vertex_handle())
+                {
+                    best_cdt.insert(random_point);
+                    int new_obtuse = count_Obtuse_Angles(best_cdt);
+
+                    // Update the best state
+                    best_state.cdt = best_cdt;
+                    best_state.obtuse_count = new_obtuse;
+                    best_state.steiner_points++;
+                    best_state.steiner_locations.push_back(random_point);
+                    cout << "New best solution found: Obtuse Count = " << best_state.obtuse_count << endl;
+                    best_state.obtuse_history.push_back(new_obtuse);
+                    stagnation_count = 0; // Reset stagnation count
+                }
+                else
+                {
+                    cout << "SA Random point insertion failed.\n";
+                }
+            }
+            else
+            {
+                cout << "SA Random point is outside the convex hull.\n";
+            }
+        }
+
+        // Decrease the temperature
         temperature -= 1.0 / 0.95;
+        
     }
-    // επιστεφουμε το καλυτερο state που βρηκαμε
+    
+    // Return the best state found
     return best_state;
 }
-double calculate_energy(const CDT &triangulation, const Point &steiner, double alpha, double beta)
-{
+
+double calculate_energy(const CDT& triangulation, const Point& steiner, double alpha, double beta) {
     CDT temp_cdt = triangulation;
     temp_cdt.insert(steiner);
     int obtuse_count = count_Obtuse_Angles(temp_cdt);
@@ -286,6 +422,7 @@ State aco_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtu
     best_state.cdt = cdt;
     best_state.obtuse_count = initial_obtuse;
     best_state.steiner_points = 0;
+    best_state.obtuse_history.push_back(initial_obtuse);  // Add initial obtuse count to history
 
     int stagnation_counter = 0;
     const int MAX_STAGNATION = 50; // Maximum number of iterations without improvement
@@ -368,13 +505,16 @@ State aco_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtu
                 CDT::Vertex_handle v = current_state.cdt.insert(chosen_steiner);
                 if (v != CDT::Vertex_handle())
                 {
-                    current_state.steiner_points++;
-                    current_state.steiner_locations.push_back(chosen_steiner);
+                    
                     int new_obtuse_count = count_Obtuse_Angles(current_state.cdt);
                     if (new_obtuse_count < current_state.obtuse_count)
                     {
+                        current_state.steiner_points++;
+                       current_state.steiner_locations.push_back(chosen_steiner);
                         current_state.obtuse_count = new_obtuse_count;
                         steps_without_improvement = 0;
+                        best_state.obtuse_history.push_back(current_state.obtuse_count);
+                        
                     }
                     else
                     {
@@ -391,6 +531,7 @@ State aco_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtu
                 best_state = current_state;
                 improved = true;
                 stagnation_counter = 0;
+                best_state.obtuse_history.push_back(current_state.obtuse_count);
             }
         }
 
@@ -408,7 +549,15 @@ State aco_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtu
                 pheromones[steiner] += delta;
             }
         }
+        if (!best_state.obtuse_history.empty() && 
+            best_state.obtuse_history.back() != best_state.obtuse_count)
+        {
+            
+            best_state.obtuse_history.push_back(best_state.obtuse_count);
+        }
+        
 
+        best_state.obtuse_history.push_back(best_state.obtuse_count);
         if (!improved)
         {
             stagnation_counter++;
@@ -431,7 +580,9 @@ string recognize_input_category(const vector<int> &region_boundary, const vector
 
     CGAL::Orientation initial_orientation = CGAL::COLLINEAR;
 
-    // Check convexity and axis alignment
+    std::cout << "Debug: Checking convexity and axis alignment..." << std::endl;
+
+    // Check convexity and axis alignment of the region boundary
     for (size_t i = 0; i < region_boundary.size(); ++i)
     {
         size_t j = (i + 1) % region_boundary.size();
@@ -440,9 +591,7 @@ string recognize_input_category(const vector<int> &region_boundary, const vector
         Point q = points[region_boundary[j]];
         Point r = points[region_boundary[k]];
 
-        ///////////////////////////
         CGAL::Orientation orientation = CGAL::orientation(p, q, r);
-        ///////////////////////////
 
         if (orientation != CGAL::COLLINEAR)
         {
@@ -453,6 +602,7 @@ string recognize_input_category(const vector<int> &region_boundary, const vector
             else if (orientation != initial_orientation)
             {
                 is_convex = false;
+                std::cout << "Debug: Non-convex shape detected at points " << i << ", " << j << ", " << k << std::endl;
                 break;
             }
         }
@@ -460,47 +610,82 @@ string recognize_input_category(const vector<int> &region_boundary, const vector
         if (p.x() != q.x() && p.y() != q.y())
         {
             is_axis_aligned = false;
+            std::cout << "Debug: Non-axis-aligned edge detected between points " << i << " and " << j << std::endl;
         }
     }
 
-    // Check constraints (additional)
-    for (const auto &constraint : additional_constraints)
+    std::cout << "Debug: Is convex: " << (is_convex ? "Yes" : "No") << std::endl;
+    std::cout << "Debug: Is axis-aligned: " << (is_axis_aligned ? "Yes" : "No") << std::endl;
+
+    std::cout << "Debug: Checking for closed and open constraints..." << std::endl;
+
+    // Check for closed constraints
+    if (!additional_constraints.empty())
     {
-        bool on_boundary = false;
-        for (size_t i = 0; i < region_boundary.size(); ++i)
+        std::cout << "Debug: Number of additional constraints: " << additional_constraints.size() << std::endl;
+        
+        std::unordered_map<int, std::vector<int>> constraint_graph;
+        for (const auto &constraint : additional_constraints)
         {
-            size_t j = (i + 1) % region_boundary.size();
-            if ((constraint.first == region_boundary[i] && constraint.second == region_boundary[j]) ||
-                (constraint.first == region_boundary[j] && constraint.second == region_boundary[i]))
+            constraint_graph[constraint.first].push_back(constraint.second);
+            constraint_graph[constraint.second].push_back(constraint.first);
+        }
+
+        std::function<bool(int, int, std::vector<bool>&)> dfs = [&](int start, int current, std::vector<bool>& visited) -> bool {
+            if (current == start && visited[current]) return true;
+            if (visited[current]) return false;
+            
+            visited[current] = true;
+            for (int neighbor : constraint_graph[current]) {
+                if (dfs(start, neighbor, visited)) return true;
+            }
+            return false;
+        };
+
+        for (const auto &entry : constraint_graph)
+        {
+            std::vector<bool> visited(points.size(), false);
+            if (dfs(entry.first, entry.first, visited))
             {
-                on_boundary = true;
+                has_closed_constraints = true;
+                std::cout << "Debug: Closed constraint detected starting from point " << entry.first << std::endl;
+                if (entry.first == 0){
+                    has_closed_constraints = false;
+                }
                 break;
             }
         }
-        if (on_boundary)
-        {
-            has_closed_constraints = true;
-        }
-        else
-        {
-            has_open_constraints = true;
-        }
+
+        has_open_constraints = !has_closed_constraints || additional_constraints.size() > constraint_graph.size();
+        
+        std::cout << "Debug: Has closed constraints: " << (has_closed_constraints ? "Yes" : "No") << std::endl;
+        std::cout << "Debug: Has open constraints: " << (has_open_constraints ? "Yes" : "No") << std::endl;
+    }
+    else
+    {
+        std::cout << "Debug: No additional constraints" << std::endl;
     }
 
     // Determine category
+    std::string category;
     if (is_convex && additional_constraints.empty())
-        return "A";
-    if (is_convex && has_open_constraints && !has_closed_constraints)
-        return "B";
-    if (is_convex && has_closed_constraints)
-        return "C";
-    if (!is_convex && is_axis_aligned && additional_constraints.empty())
-        return "D";
-    return "E";
+        category = "A";
+    else if (is_convex && has_closed_constraints && !has_open_constraints)
+        category = "C";
+    else if (is_convex && has_open_constraints)
+        category = "B";
+    else if (!is_convex && is_axis_aligned && additional_constraints.empty())
+        category = "D";
+    else
+        category = "E";
+
+    std::cout << "Debug: Determined category: " << category << std::endl;
+    return category;
 }
 // Κύρια συνάρτηση
 TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &points_y, const vector<int> &region_boundary, const vector<pair<int, int>> &additional_constraints, double alpha, double beta, int L, string &method, bool delaunay)
 {
+    auto start_time = std::chrono::high_resolution_clock::now();
     // Αρχεικοποιουμε το CDT
     CDT cdt;
     // φτιαχνουμε Vector για να αποθηκευσουμε ολα τα points
@@ -539,18 +724,17 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     cout << "Initial obtuse angles: " << best_obtuse << endl;
     // αρχικοποιηση για το best_CDT και state
     CDT best_cdt;
-    int max_depth = 12000;
+    int max_depth = 6000;
     State best_overall_state;
     best_overall_state.obtuse_count = numeric_limits<int>::max();
-    auto start_time = std::chrono::high_resolution_clock::now();
+    
     if (delaunay)
     {
         // κανουμε την μεθοδο sa
         if (method == "sa")
         {
             // για καλυτερα αποτελσματα την κανουμε 10 φορες και επιστεφουμε την καλυτερη
-            for (size_t i = 0; i < 10; i++)
-            {
+            for (int i = 0; i < 10; i++){
 
                 State current_best = sa_triangulation(cdt, convex_hull, best_obtuse, best_cdt, alpha, beta, L);
 
@@ -560,25 +744,79 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
                     best_cdt = current_best.cdt;
                 }
             }
+            double total_convergence_rate = 0.0;
+            int N = best_overall_state.obtuse_history.size();
+            for (int n = 1; n < N; n++) {
+                total_convergence_rate += calculate_convergence_rate(n, 
+                                                             best_overall_state.obtuse_history[n-1], 
+                                                             best_overall_state.obtuse_history[n]);
+            }
+            // Calculate average convergence rate
+            double avg_convergence_rate = 0.0;
+            if (N > 1) {
+            avg_convergence_rate = total_convergence_rate / (N - 1);
+            }
+    
+    cout << "Average convergence rate (p̄): " << avg_convergence_rate << endl;
             // καλουμε την μεθοδο local
+        cout << "SA New best solution found: Obtuse Count = " << best_overall_state.obtuse_count << "\n";
+        cout << "steiner pont counter: " << best_overall_state.steiner_points << "\n"; 
         }
         else if (method == "local")
         {
-            State initial_state = {cdt, best_obtuse, 0, {}, {}};
+            
+            State initial_state = {cdt, best_obtuse, 0, {}, {}, {count_Obtuse_Angles(cdt)}};
             best_overall_state = local_triangulation(cdt, convex_hull, best_obtuse, best_cdt, max_depth);
             best_cdt = best_overall_state.cdt;
-        }
-        else if (method == "aco")
-        {
+            double total_convergence_rate = 0.0;
+    int N = best_overall_state.obtuse_history.size();
+    
+    for (int n = 1; n < N; n++) {
+        total_convergence_rate += calculate_convergence_rate(n, 
+                                                             best_overall_state.obtuse_history[n-1], 
+                                                             best_overall_state.obtuse_history[n]);
+    }
+    
+    // Calculate average convergence rate
+    double avg_convergence_rate = 0.0;
+    if (N > 1) {
+        avg_convergence_rate = total_convergence_rate / (N - 1);
+    }
+    
+    cout << "Average convergence rate (p̄): " << avg_convergence_rate << endl;
+    cout<< "steiner pont counter: " << best_overall_state.steiner_points << "\n"; 
+    cout << "Local New best solution found: Obtuse Count = " << best_overall_state.obtuse_count << "\n";
+        
+        } else if (method == "aco") {
+            State initial_state = {cdt, best_obtuse, 0, {}, {}, {count_Obtuse_Angles(cdt)}};
             // ACO parameters
-            int K = 10;          // Number of ants
-            double chi = 1.0;    // Pheromone importance
-            double psi = 2.0;    // Heuristic importance
-            double lambda = 0.1; // Evaporation rate
+            int K = 10;  // Number of ants
+            double chi = 1.0;  // Pheromone importance
+            double psi = 3.0;  // Heuristic importance
+            double lambda = 0.5;  // Evaporation rate
 
-            best_overall_state = aco_triangulation(cdt, convex_hull, best_obtuse,
+            best_overall_state = aco_triangulation(cdt, convex_hull, best_obtuse, 
                                                    alpha, beta, L, K, chi, psi, lambda);
             best_cdt = best_overall_state.cdt;
+            double total_convergence_rate = 0.0;
+    int N = best_overall_state.obtuse_history.size();
+    
+    for (int n = 1; n < N; n++) {
+        total_convergence_rate += calculate_convergence_rate(n, 
+                                                             best_overall_state.obtuse_history[n-1], 
+                                                             best_overall_state.obtuse_history[n]);
+    }
+    cout<< "total convergence rate (p��): " << total_convergence_rate << endl;
+    
+    // Calculate average convergence rate
+    double avg_convergence_rate = 0.0;
+    if (N > 1) {
+        avg_convergence_rate = total_convergence_rate / (N - 1);
+    }
+    cout << "Average convergence rate " << avg_convergence_rate << endl;
+    cout << "steiner pont counter: " << best_overall_state.steiner_points << "\n"; 
+    cout << "ACO New best solution found: Obtuse Count = " << best_overall_state.obtuse_count << "\n";
+        } else {
         }
     }
     // αν το delaunay ειναι false τοτε τρεχουμε την πρωτη εργασια
@@ -587,7 +825,7 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
         old_triangulate(points_x, points_y, region_boundary, additional_constraints);
     }
     // ετοιμαζουμε τα αποτελεσματα
-    draw(best_overall_state.cdt);
+    
     TriangulationResult results;
     results.obtuse_count = best_overall_state.obtuse_count;
 
@@ -626,9 +864,11 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
             results.steiner_points_y.push_back(CGAL::to_double(p.y()));
         }
     }
-
-    cout << best_overall_state.obtuse_count << " is the final Obtuse count" << endl;
-    cout << best_overall_state.steiner_points << " steiner points added" << endl;
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    std::cout << "Total execution time: " << duration.count() << " milliseconds" << std::endl;
+    //draw(best_overall_state.cdt);
     return results;
+    
 }
 //////////////////////////////////////////////////////////////////////////

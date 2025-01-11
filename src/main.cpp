@@ -4,6 +4,7 @@
 #include <vector>
 #include "json.hpp"
 #include "triangulation.h"
+#include <chrono>
 
 using json = nlohmann::json;
 using namespace std;
@@ -50,8 +51,8 @@ if (j.contains("parameters")) {
     }
 } else {
     // Set default values or handle the absence of parameters
-    alpha = 1.0;  // Example default value
-    beta = 1.0;   // Example default value
+    alpha = 5.0;  // Example default value
+    beta = 0.5;   // Example default value
     L = 1000;     // Example default value
     cout << "Warning: Parameters not found in JSON. Using default values." << endl;
 }
@@ -77,10 +78,11 @@ int main()
     double alpha, beta;
     int L;
     bool delaunay = true;
-
+    std::chrono::seconds time_limit(600);
     // Κάλεσμα της συνάρτησης για φόρτωση δεδομένων
     loadDataFromJSON("data.json", points_x, points_y, region_boundary, additional_constraints, instance_uid, method,alpha ,beta ,L,delaunay);
 
+    // Εκτέλεση τριγωνοποίησης
     // Εκτέλεση τριγωνοποίησης
     TriangulationResult result = triangulate(points_x, points_y, region_boundary, additional_constraints,alpha, beta, L, method,delaunay);
     json output;
@@ -88,14 +90,33 @@ int main()
     output["instance_uid"] = instance_uid;
     output["method"] = method;  
     output["obtuse_count"] = result.obtuse_count;
-    output["steiner_points_x"] = result.steiner_points_x;
-    output["steiner_points_y"] = result.steiner_points_y;
+    vector<string> steiner_x, steiner_y;
+
+    for (size_t i = 0; i < result.steiner_points_x.size(); ++i) {
+        // Convert x-coordinate to string
+        steiner_x.push_back(to_string(static_cast<int>(result.steiner_points_x[i])));
+        
+        // Convert y-coordinate to fraction string
+        double y = result.steiner_points_y[i];
+        int y_int = static_cast<int>(y);
+        int y_frac = static_cast<int>((y - y_int) * 3 + 0.5);
+        if (y_frac == 0) {
+            steiner_y.push_back(to_string(y_int));
+        } else if (y_frac == 3) {
+            steiner_y.push_back(to_string(y_int + 1));
+        } else {
+            steiner_y.push_back(to_string(y_int) + " " + to_string(y_frac) + "/3");
+        }
+    }
+
+    output["steiner_points_x"] = steiner_x;
+    output["steiner_points_y"] = steiner_y;
+
     json edges_json = json::array();
     for (const auto& edge : result.edges) {
         edges_json.push_back({edge.first, edge.second});
     }
     output["edges"] = edges_json;
-
 
     // Γραφουμε τα αποτελεσμένα στο output.json
     ofstream out_file("output.json");

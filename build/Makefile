@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/t225/project3/Project_3
+CMAKE_SOURCE_DIR = /home/chatzos/project_3-master
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/t225/project3/Project_3/build
+CMAKE_BINARY_DIR = /home/chatzos/project_3-master/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/t225/project3/Project_3/build/CMakeFiles /home/t225/project3/Project_3/build/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/chatzos/project_3-master/build/CMakeFiles /home/chatzos/project_3-master/build/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/t225/project3/Project_3/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/chatzos/project_3-master/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target

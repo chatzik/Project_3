@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/t225/project3/Project_3
+CMAKE_SOURCE_DIR = /home/chatzos/project_3-master
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/t225/project3/Project_3/build
+CMAKE_BINARY_DIR = /home/chatzos/project_3-master/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/triangulation.dir/depend.make
@@ -59,55 +59,55 @@ include CMakeFiles/triangulation.dir/flags.make
 
 CMakeFiles/triangulation.dir/src/main.cpp.o: CMakeFiles/triangulation.dir/flags.make
 CMakeFiles/triangulation.dir/src/main.cpp.o: ../src/main.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/t225/project3/Project_3/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/triangulation.dir/src/main.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/triangulation.dir/src/main.cpp.o -c /home/t225/project3/Project_3/src/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/chatzos/project_3-master/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/triangulation.dir/src/main.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/triangulation.dir/src/main.cpp.o -c /home/chatzos/project_3-master/src/main.cpp
 
 CMakeFiles/triangulation.dir/src/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/triangulation.dir/src/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/t225/project3/Project_3/src/main.cpp > CMakeFiles/triangulation.dir/src/main.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/chatzos/project_3-master/src/main.cpp > CMakeFiles/triangulation.dir/src/main.cpp.i
 
 CMakeFiles/triangulation.dir/src/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/triangulation.dir/src/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/t225/project3/Project_3/src/main.cpp -o CMakeFiles/triangulation.dir/src/main.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/chatzos/project_3-master/src/main.cpp -o CMakeFiles/triangulation.dir/src/main.cpp.s
 
 CMakeFiles/triangulation.dir/src/triangulation.cpp.o: CMakeFiles/triangulation.dir/flags.make
 CMakeFiles/triangulation.dir/src/triangulation.cpp.o: ../src/triangulation.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/t225/project3/Project_3/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/triangulation.dir/src/triangulation.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/triangulation.dir/src/triangulation.cpp.o -c /home/t225/project3/Project_3/src/triangulation.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/chatzos/project_3-master/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/triangulation.dir/src/triangulation.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/triangulation.dir/src/triangulation.cpp.o -c /home/chatzos/project_3-master/src/triangulation.cpp
 
 CMakeFiles/triangulation.dir/src/triangulation.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/triangulation.dir/src/triangulation.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/t225/project3/Project_3/src/triangulation.cpp > CMakeFiles/triangulation.dir/src/triangulation.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/chatzos/project_3-master/src/triangulation.cpp > CMakeFiles/triangulation.dir/src/triangulation.cpp.i
 
 CMakeFiles/triangulation.dir/src/triangulation.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/triangulation.dir/src/triangulation.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/t225/project3/Project_3/src/triangulation.cpp -o CMakeFiles/triangulation.dir/src/triangulation.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/chatzos/project_3-master/src/triangulation.cpp -o CMakeFiles/triangulation.dir/src/triangulation.cpp.s
 
 CMakeFiles/triangulation.dir/src/strategies.cpp.o: CMakeFiles/triangulation.dir/flags.make
 CMakeFiles/triangulation.dir/src/strategies.cpp.o: ../src/strategies.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/t225/project3/Project_3/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/triangulation.dir/src/strategies.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/triangulation.dir/src/strategies.cpp.o -c /home/t225/project3/Project_3/src/strategies.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/chatzos/project_3-master/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/triangulation.dir/src/strategies.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/triangulation.dir/src/strategies.cpp.o -c /home/chatzos/project_3-master/src/strategies.cpp
 
 CMakeFiles/triangulation.dir/src/strategies.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/triangulation.dir/src/strategies.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/t225/project3/Project_3/src/strategies.cpp > CMakeFiles/triangulation.dir/src/strategies.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/chatzos/project_3-master/src/strategies.cpp > CMakeFiles/triangulation.dir/src/strategies.cpp.i
 
 CMakeFiles/triangulation.dir/src/strategies.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/triangulation.dir/src/strategies.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/t225/project3/Project_3/src/strategies.cpp -o CMakeFiles/triangulation.dir/src/strategies.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/chatzos/project_3-master/src/strategies.cpp -o CMakeFiles/triangulation.dir/src/strategies.cpp.s
 
 CMakeFiles/triangulation.dir/src/old_triangulation.cpp.o: CMakeFiles/triangulation.dir/flags.make
 CMakeFiles/triangulation.dir/src/old_triangulation.cpp.o: ../src/old_triangulation.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/t225/project3/Project_3/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/triangulation.dir/src/old_triangulation.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/triangulation.dir/src/old_triangulation.cpp.o -c /home/t225/project3/Project_3/src/old_triangulation.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/chatzos/project_3-master/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/triangulation.dir/src/old_triangulation.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/triangulation.dir/src/old_triangulation.cpp.o -c /home/chatzos/project_3-master/src/old_triangulation.cpp
 
 CMakeFiles/triangulation.dir/src/old_triangulation.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/triangulation.dir/src/old_triangulation.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/t225/project3/Project_3/src/old_triangulation.cpp > CMakeFiles/triangulation.dir/src/old_triangulation.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/chatzos/project_3-master/src/old_triangulation.cpp > CMakeFiles/triangulation.dir/src/old_triangulation.cpp.i
 
 CMakeFiles/triangulation.dir/src/old_triangulation.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/triangulation.dir/src/old_triangulation.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/t225/project3/Project_3/src/old_triangulation.cpp -o CMakeFiles/triangulation.dir/src/old_triangulation.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/chatzos/project_3-master/src/old_triangulation.cpp -o CMakeFiles/triangulation.dir/src/old_triangulation.cpp.s
 
 # Object files for target triangulation
 triangulation_OBJECTS = \
@@ -133,7 +133,7 @@ triangulation: /usr/lib/x86_64-linux-gnu/libQt5Widgets.so.5.12.8
 triangulation: /usr/lib/x86_64-linux-gnu/libQt5Gui.so.5.12.8
 triangulation: /usr/lib/x86_64-linux-gnu/libQt5Core.so.5.12.8
 triangulation: CMakeFiles/triangulation.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/t225/project3/Project_3/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable triangulation"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/chatzos/project_3-master/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable triangulation"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/triangulation.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -146,6 +146,6 @@ CMakeFiles/triangulation.dir/clean:
 .PHONY : CMakeFiles/triangulation.dir/clean
 
 CMakeFiles/triangulation.dir/depend:
-	cd /home/t225/project3/Project_3/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/t225/project3/Project_3 /home/t225/project3/Project_3 /home/t225/project3/Project_3/build /home/t225/project3/Project_3/build /home/t225/project3/Project_3/build/CMakeFiles/triangulation.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/chatzos/project_3-master/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/chatzos/project_3-master /home/chatzos/project_3-master /home/chatzos/project_3-master/build /home/chatzos/project_3-master/build /home/chatzos/project_3-master/build/CMakeFiles/triangulation.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/triangulation.dir/depend
 

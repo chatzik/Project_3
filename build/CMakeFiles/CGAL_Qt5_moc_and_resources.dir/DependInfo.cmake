@@ -4,11 +4,11 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/t225/project3/Project_3/build/CGAL_Qt5_moc_and_resources_autogen/mocs_compilation.cpp" "/home/t225/project3/Project_3/build/CMakeFiles/CGAL_Qt5_moc_and_resources.dir/CGAL_Qt5_moc_and_resources_autogen/mocs_compilation.cpp.o"
-  "/home/t225/project3/Project_3/build/qrc_CGAL.cpp" "/home/t225/project3/Project_3/build/CMakeFiles/CGAL_Qt5_moc_and_resources.dir/qrc_CGAL.cpp.o"
-  "/home/t225/project3/Project_3/build/qrc_File.cpp" "/home/t225/project3/Project_3/build/CMakeFiles/CGAL_Qt5_moc_and_resources.dir/qrc_File.cpp.o"
-  "/home/t225/project3/Project_3/build/qrc_Input.cpp" "/home/t225/project3/Project_3/build/CMakeFiles/CGAL_Qt5_moc_and_resources.dir/qrc_Input.cpp.o"
-  "/home/t225/project3/Project_3/build/qrc_Triangulation_2.cpp" "/home/t225/project3/Project_3/build/CMakeFiles/CGAL_Qt5_moc_and_resources.dir/qrc_Triangulation_2.cpp.o"
+  "/home/chatzos/project_3-master/build/CGAL_Qt5_moc_and_resources_autogen/mocs_compilation.cpp" "/home/chatzos/project_3-master/build/CMakeFiles/CGAL_Qt5_moc_and_resources.dir/CGAL_Qt5_moc_and_resources_autogen/mocs_compilation.cpp.o"
+  "/home/chatzos/project_3-master/build/qrc_CGAL.cpp" "/home/chatzos/project_3-master/build/CMakeFiles/CGAL_Qt5_moc_and_resources.dir/qrc_CGAL.cpp.o"
+  "/home/chatzos/project_3-master/build/qrc_File.cpp" "/home/chatzos/project_3-master/build/CMakeFiles/CGAL_Qt5_moc_and_resources.dir/qrc_File.cpp.o"
+  "/home/chatzos/project_3-master/build/qrc_Input.cpp" "/home/chatzos/project_3-master/build/CMakeFiles/CGAL_Qt5_moc_and_resources.dir/qrc_Input.cpp.o"
+  "/home/chatzos/project_3-master/build/qrc_Triangulation_2.cpp" "/home/chatzos/project_3-master/build/CMakeFiles/CGAL_Qt5_moc_and_resources.dir/qrc_Triangulation_2.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
