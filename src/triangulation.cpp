@@ -682,6 +682,7 @@ string recognize_input_category(const vector<int> &region_boundary, const vector
     std::cout << "Debug: Determined category: " << category << std::endl;
     return category;
 }
+
 // Κύρια συνάρτηση
 TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &points_y, const vector<int> &region_boundary, const vector<pair<int, int>> &additional_constraints, double alpha, double beta, int L, string &method, bool delaunay)
 {
