@@ -28,7 +28,7 @@ typedef CDT::Point Point;
 typedef CGAL::Polygon_2<K> Polygon_2;
 typedef CDT::Face_handle Face_handle;
 using namespace std;
-bool randomization = false;
+bool randomization = true;
 // State definition
 struct State
 {
@@ -351,7 +351,7 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
 
         // Randomization: Insert a random Steiner point if stagnation persists for 100 iterations
         //cout << "SA Stagnation count: " << stagnation_count << "\n";
-        if (stagnation_count >= 100 && randomization)
+        if (stagnation_count >= 1 && randomization)
         {
             Point random_point = generate_random_point_within_hull(convex_hull);
             cout << "SA Randomization triggered. Generated random point: (" << random_point.x() << ", " << random_point.y() << ")\n";
