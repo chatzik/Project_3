@@ -129,6 +129,9 @@ State local_triangulation(CDT &initial_cdt, Polygon_2 &convex_hull, int &best_ob
 {
     queue<State> queue;
     unordered_set<State, StateHash> visited; // Custom hash for State
+    auto start_time = std::chrono::high_resolution_clock::now();
+    const int TIME_LIMIT = 500; // 8 minutes in seconds
+
 
     // Initialize with the initial state
     State initial_state = {initial_cdt, count_Obtuse_Angles(initial_cdt), 0, {}, {},{count_Obtuse_Angles(initial_cdt)}};
@@ -143,6 +146,13 @@ State local_triangulation(CDT &initial_cdt, Polygon_2 &convex_hull, int &best_ob
     // Exploration via local strategies
     while (!queue.empty() && iteration_count < max_iterations && best_state.obtuse_count > 0)
     {
+        auto current_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time);
+        if (duration.count() >= TIME_LIMIT)
+        {
+            std::cout << "Time limit reached. Stopping local search." << std::endl;
+            break;
+        }
         State current_state = queue.front();
         queue.pop();
 
@@ -256,6 +266,8 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
     // Initialize the current state
     State current_state;
     current_state.cdt = cdt;
+    auto start_time = std::chrono::high_resolution_clock::now();
+    const int TIME_LIMIT = 500; // 8 minutes in seconds
     current_state.obtuse_count = initial_obtuse;
     current_state.steiner_points = 0;
     current_state.obtuse_history.push_back(initial_obtuse);
@@ -279,12 +291,19 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
     // Main loop of simulated annealing
     while (temperature >= 0)
     {
+        auto current_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time);
+        if (duration.count() >= TIME_LIMIT)
+        {
+            std::cout << "Time limit reached. Stopping local search." << std::endl;
+            break;
+        }
         // Perform L iterations for each temperature
         for (int i = 0; i < L; ++i)
         {
             //stagnation_count++;
     
-            if (stagnation_count >= 100000){
+            if (stagnation_count >= 100){
                 cout << "SA Stopping due to stagnation.\n";
                 break;
             }else{
@@ -303,7 +322,7 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
             // If no obtuse triangles remain, terminate
             if (obtuse_faces.empty())
                 break;
-
+            
             // Select a random obtuse triangle
             uniform_int_distribution<> face_dis(0, obtuse_faces.size() - 1);
             int selected_index = face_dis(gen);
@@ -337,24 +356,26 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
                     double new_energy = energy(new_state.cdt, cdt.number_of_vertices());
                     double delta_energy = new_energy - best_energy;
 
+                    if (new_energy < best_energy)
+                        {
+                            best_state.steiner_points++;
+                            best_state = new_state;
+                            best_energy = new_energy;
+                            best_cdt = new_state.cdt;
+                            best_state.obtuse_history.push_back (new_state.obtuse_count);
+                            stagnation_count = 0; // Reset stagnation count
+                            
+                        }
                     // Metropolis criterion
                     if (delta_energy < 0 || exp(-delta_energy / temperature) > dis(gen))
                     {
                         current_state = new_state;
                         current_energy = new_energy;
-
-                        // Update the best state if the new state is better
-                        if (current_energy < best_energy)
-                        {
-                            
-                            best_state = current_state;
-                            best_energy = current_energy;
-                            best_cdt = current_state.cdt;
-                            best_state.obtuse_history.push_back (best_state.obtuse_count);
-                            stagnation_count = 0; // Reset stagnation count
-                            
-                        }
+                       
                     }
+                        // Update the best state if the new state is better
+                        
+                    
                 }
             }
 
@@ -364,7 +385,7 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
 
         // Randomization: Insert a random Steiner point if stagnation persists for 100 iterations
         //cout << "SA Stagnation count: " << stagnation_count << "\n";
-        if (stagnation_count >= 1 && randomization)
+        if (stagnation_count >= 100 && randomization)
         {
             Point random_point = generate_random_point_within_hull(convex_hull);
             cout << "SA Randomization triggered. Generated random point: (" << random_point.x() << ", " << random_point.y() << ")\n";
@@ -431,6 +452,8 @@ State aco_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtu
     }
 
     // Initialize best state
+    auto start_time = std::chrono::high_resolution_clock::now();
+    const int TIME_LIMIT = 500; // 8 minutes in seconds
     State best_state;
     best_state.cdt = cdt;
     best_state.obtuse_count = initial_obtuse;
@@ -443,6 +466,13 @@ State aco_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtu
     // Main ACO loop
     for (int cycle = 0; cycle < L; ++cycle)
     {
+        auto current_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time);
+        if (duration.count() >= TIME_LIMIT)
+        {
+            std::cout << "Time limit reached. Stopping local search." << std::endl;
+            break;
+        }
         std::vector<State> ant_solutions(K);
         bool improved = false;
 
