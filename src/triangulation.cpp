@@ -60,11 +60,24 @@ double calculate_energy(const State& state, double alpha, double beta) {
 }
 Point generate_random_point_within_hull(const Polygon_2 &convex_hull)
 {
-    // Generate a random point inside the bounding box of the convex hull
-    auto bbox = CGAL::bbox_2(convex_hull.vertices_begin(), convex_hull.vertices_end());
-    double x = CGAL::to_double(bbox.xmin()) + (rand() / (RAND_MAX + 1.0)) * (CGAL::to_double(bbox.xmax()) - CGAL::to_double(bbox.xmin()));
-    double y = CGAL::to_double(bbox.ymin()) + (rand() / (RAND_MAX + 1.0)) * (CGAL::to_double(bbox.ymax()) - CGAL::to_double(bbox.ymin()));
-    return Point(x, y);
+    // Use the bounding box of the convex hull
+    CGAL::Bbox_2 bbox = convex_hull.bbox();
+
+    // Create a random number generator with a time-based seed
+    static unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    static std::mt19937 gen(seed);
+    std::uniform_real_distribution<> dis_x(bbox.xmin(), bbox.xmax());
+    std::uniform_real_distribution<> dis_y(bbox.ymin(), bbox.ymax());
+
+    while (true) {
+        double x = dis_x(gen);
+        double y = dis_y(gen);
+        Point p(x, y);
+
+        if (convex_hull.bounded_side(p) == CGAL::ON_BOUNDED_SIDE) {
+            return p;
+        }
+    }
 }
 
 // εκτυπωνουμε τα στοιχεία της κατάστάσης
@@ -691,12 +704,17 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     CDT cdt;
     // φτιαχνουμε Vector για να αποθηκευσουμε ολα τα points
     vector<Point> points;
+    
 
     for (size_t i = 0; i < points_x.size(); ++i)
     {
         points.push_back(Point(points_x[i], points_y[i]));
     }
-    // δημιουμε το convex hull
+
+    for (const Point& p : points) {
+    cdt.insert(p);
+    }
+   // δημιουμε το convex hull
     Polygon_2 convex_hull;
     for (size_t i : region_boundary)
     {
@@ -707,6 +725,7 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     for (size_t i = 0; i < region_boundary.size(); ++i)
     {
         int next = (i + 1) % region_boundary.size();
+
         cdt.insert_constraint(points[region_boundary[i]], points[region_boundary[next]]);
     }
     // Προσθηκη additional constraints
@@ -736,13 +755,16 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
         {
             // για καλυτερα αποτελσματα την κανουμε 10 φορες και επιστεφουμε την καλυτερη
             for (int i = 0; i < 10; i++){
-
+                cout<< "SA iteration " << i << endl;
                 State current_best = sa_triangulation(cdt, convex_hull, best_obtuse, best_cdt, alpha, beta, L);
 
                 if (current_best.obtuse_count < best_overall_state.obtuse_count)
                 {
                     best_overall_state = current_best;
                     best_cdt = current_best.cdt;
+                }
+                if (current_best.obtuse_count == 0){
+                    break;
                 }
             }
             double total_convergence_rate = 0.0;
@@ -757,8 +779,16 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
             if (N > 1) {
             avg_convergence_rate = total_convergence_rate / (N - 1);
             }
-    
-    cout << "Average convergence rate (p̄): " << avg_convergence_rate << endl;
+    if (std::isinf(avg_convergence_rate) || std::isnan(avg_convergence_rate)) {
+    // Use energy calculation instead
+    double initial_energy = alpha * best_overall_state.obtuse_history.front() + beta * 0; // Assuming no initial Steiner points
+    double final_energy = alpha * best_overall_state.obtuse_history.back() + beta * best_overall_state.steiner_points;
+    avg_convergence_rate = (initial_energy - final_energy) / initial_energy;
+    cout << "Using energy-based convergence rate due to invalid average." << endl;
+    cout << "final energy: " << final_energy << "\n";
+    }else{
+    cout << "Average convergence rate " << avg_convergence_rate << endl;
+    }
             // καλουμε την μεθοδο local
         cout << "SA New best solution found: Obtuse Count = " << best_overall_state.obtuse_count << "\n";
         cout << "steiner pont counter: " << best_overall_state.steiner_points << "\n"; 
@@ -783,8 +813,15 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     if (N > 1) {
         avg_convergence_rate = total_convergence_rate / (N - 1);
     }
-    
-    cout << "Average convergence rate (p̄): " << avg_convergence_rate << endl;
+    if (std::isinf(avg_convergence_rate) || std::isnan(avg_convergence_rate)) {
+    // Use energy calculation instead
+    double initial_energy = alpha * best_overall_state.obtuse_history.front() + beta * 0; // Assuming no initial Steiner points
+    double final_energy = alpha * best_overall_state.obtuse_history.back() + beta * best_overall_state.steiner_points;
+    avg_convergence_rate = (initial_energy - final_energy) / initial_energy;
+    cout << "Using energy-based convergence rate due to invalid average." << endl;
+    }else{
+    cout << "Average convergence rate " << avg_convergence_rate << endl;
+    }
     cout<< "steiner pont counter: " << best_overall_state.steiner_points << "\n"; 
     cout << "Local New best solution found: Obtuse Count = " << best_overall_state.obtuse_count << "\n";
         
@@ -814,7 +851,15 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     if (N > 1) {
         avg_convergence_rate = total_convergence_rate / (N - 1);
     }
+    if (std::isinf(avg_convergence_rate) || std::isnan(avg_convergence_rate)) {
+    // Use energy calculation instead
+    double initial_energy = alpha * best_overall_state.obtuse_history.front() + beta * 0; // Assuming no initial Steiner points
+    double final_energy = alpha * best_overall_state.obtuse_history.back() + beta * best_overall_state.steiner_points;
+    avg_convergence_rate = (initial_energy - final_energy) / initial_energy;
+    cout << "Using energy-based convergence rate due to invalid average." << endl;
+    }else{
     cout << "Average convergence rate " << avg_convergence_rate << endl;
+    }
     cout << "steiner pont counter: " << best_overall_state.steiner_points << "\n"; 
     cout << "ACO New best solution found: Obtuse Count = " << best_overall_state.obtuse_count << "\n";
         } else {
@@ -871,5 +916,5 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     //draw(best_overall_state.cdt);
     return results;
     
-}
+} 
 //////////////////////////////////////////////////////////////////////////

@@ -118,6 +118,7 @@ int main()
     }
     output["edges"] = edges_json;
 
+    
     // Γραφουμε τα αποτελεσμένα στο output.json
     ofstream out_file("output.json");
     if (out_file.is_open()) {
