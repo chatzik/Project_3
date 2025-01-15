@@ -857,10 +857,11 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
             // καλουμε την μεθοδο local
         cout << "SA New best solution found: Obtuse Count = " << best_overall_state.obtuse_count << "\n";
         cout << "steiner pont counter: " << best_overall_state.steiner_points << "\n"; 
+       method = "local";
         }
-        else if (method == "local")
+    if (method == "local")
         {
-            
+            cout<< "Local" << endl;
             State initial_state = {cdt, best_obtuse, 0, {}, {}, {count_Obtuse_Angles(cdt)}};
             best_overall_state = local_triangulation(cdt, convex_hull, best_obtuse, best_cdt, max_depth);
             best_cdt = best_overall_state.cdt;
@@ -889,8 +890,9 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     }
     cout<< "steiner pont counter: " << best_overall_state.steiner_points << "\n"; 
     cout << "Local New best solution found: Obtuse Count = " << best_overall_state.obtuse_count << "\n";
-        
-        } else if (method == "aco") {
+    method = "aco";   
+        } if (method == "aco") {
+            cout<< "Aco here"<< endl;
             State initial_state = {cdt, best_obtuse, 0, {}, {}, {count_Obtuse_Angles(cdt)}};
             // ACO parameters
             int K = 10;  // Number of ants
