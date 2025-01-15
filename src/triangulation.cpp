@@ -182,7 +182,7 @@ State local_triangulation(CDT &initial_cdt, Polygon_2 &convex_hull, int &best_ob
 
             // Test all strategies
             for (int strategy = 0; strategy < 5; ++strategy)
-            {
+            {   stagnation_count++;
                 Point steiner = select_steiner_point(a, b, c, strategy, current_state.cdt, convex_hull);
                 
                 // Check if the point is within the convex hull
@@ -201,16 +201,17 @@ State local_triangulation(CDT &initial_cdt, Polygon_2 &convex_hull, int &best_ob
                         queue.push(new_state);
                         visited.insert(new_state);
                         improvement_found = true;
+                        stagnation_count = 0;
                     }
                 }
             }
         }
-
+        
         // Randomization: Trigger after 200 consecutive stagnation iterations
         if(!improvement_found && randomization)
         {
             stagnation_count++;
-            if (stagnation_count >= 200)
+            if (stagnation_count >= 100)
             {
                 Point random_point = generate_random_point_within_hull(convex_hull);
                 cout << "Randomization triggered. Generated random point: (" << random_point.x() << ", " << random_point.y() << ")\n";
@@ -303,10 +304,47 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
         {
             //stagnation_count++;
     
-            if (stagnation_count >= 100){
-                cout << "SA Stopping due to stagnation.\n";
-                break;
-            }else{
+            if (stagnation_count >= 500 && randomization == true){
+                
+                // Generate a random Steiner point
+                Point random_point = generate_random_point_within_hull(convex_hull);
+                cout << "Randomization triggered. Generated random point: (" << random_point.x() << ", " << random_point.y() << ")\n";
+                // Check if the random Steiner point is inside or on the boundary
+                if (convex_hull.bounded_side(random_point) == CGAL::ON_BOUNDED_SIDE ||
+                    convex_hull.bounded_side(random_point) == CGAL::ON_BOUNDARY)
+                {
+                    // Create a new state with the random Steiner point
+                    State new_state = current_state;
+                    CDT::Vertex_handle v = new_state.cdt.insert(random_point);
+                    
+                    // Proceed only if the insertion was successful
+                    if (v != CDT::Vertex_handle())
+                    {
+                        best_cdt.insert(random_point);
+                    int new_obtuse = count_Obtuse_Angles(best_cdt);
+
+                    // Update the best state
+                    best_state.cdt = best_cdt;
+                    best_state.obtuse_count = new_obtuse;
+                    best_state.steiner_points++;
+                    best_state.steiner_locations.push_back(random_point);
+                    cout << "New best solution found: Obtuse Count = " << best_state.obtuse_count << endl;
+                    best_state.obtuse_history.push_back(new_obtuse);
+                    stagnation_count = 0; // Reset stagnation count
+                    }
+                    else
+                    {
+                        cout << "Random Steiner point insertion failed.\n";
+                    }
+                }
+                else
+                {
+                    cout << "Random Steiner point is outside the convex hull.\n";
+                }
+                
+                continue; 
+            }
+            else{
                 stagnation_count++;
             }
             // Identify all obtuse triangles
@@ -344,7 +382,7 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
                 // Create a new state with the Steiner point
                 State new_state = current_state;
                 CDT::Vertex_handle v = new_state.cdt.insert(steiner);
-                 // Increment stagnation count
+                
                 // Proceed only if the insertion was successful
                 if (v != CDT::Vertex_handle())
                 {
@@ -355,17 +393,16 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
                     // Compute the energy of the new state
                     double new_energy = energy(new_state.cdt, cdt.number_of_vertices());
                     double delta_energy = new_energy - best_energy;
-
                     if (new_energy < best_energy)
-                        {
-                            best_state.steiner_points++;
-                            best_state = new_state;
-                            best_energy = new_energy;
-                            best_cdt = new_state.cdt;
-                            best_state.obtuse_history.push_back (new_state.obtuse_count);
-                            stagnation_count = 0; // Reset stagnation count
-                            
-                        }
+                    {
+                    best_state = new_state;  // This will copy all fields, including steiner_points
+                    best_energy = new_energy;
+                    best_cdt = new_state.cdt;
+                    best_state.obtuse_history.push_back(new_state.obtuse_count);
+                    stagnation_count = 0; // Reset stagnation count
+                    cout << "New best solution found with better energy: Obtuse Count = " << best_state.obtuse_count 
+                    << ", Steiner Points = " << best_state.steiner_points << endl;
+                    }
                     // Metropolis criterion
                     if (delta_energy < 0 || exp(-delta_energy / temperature) > dis(gen))
                     {
@@ -383,41 +420,7 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
             obtuse_faces.erase(obtuse_faces.begin() + selected_index);
         }
 
-        // Randomization: Insert a random Steiner point if stagnation persists for 100 iterations
-        //cout << "SA Stagnation count: " << stagnation_count << "\n";
-        if (stagnation_count >= 100 && randomization)
-        {
-            Point random_point = generate_random_point_within_hull(convex_hull);
-            cout << "SA Randomization triggered. Generated random point: (" << random_point.x() << ", " << random_point.y() << ")\n";
-
-            if (convex_hull.bounded_side(random_point) == CGAL::ON_BOUNDED_SIDE ||
-                convex_hull.bounded_side(random_point) == CGAL::ON_BOUNDARY)
-            {
-                CDT::Vertex_handle v = current_state.cdt.insert(random_point);
-                if (v != CDT::Vertex_handle())
-                {
-                    best_cdt.insert(random_point);
-                    int new_obtuse = count_Obtuse_Angles(best_cdt);
-
-                    // Update the best state
-                    best_state.cdt = best_cdt;
-                    best_state.obtuse_count = new_obtuse;
-                    best_state.steiner_points++;
-                    best_state.steiner_locations.push_back(random_point);
-                    cout << "New best solution found: Obtuse Count = " << best_state.obtuse_count << endl;
-                    best_state.obtuse_history.push_back(new_obtuse);
-                    stagnation_count = 0; // Reset stagnation count
-                }
-                else
-                {
-                    cout << "SA Random point insertion failed.\n";
-                }
-            }
-            else
-            {
-                cout << "SA Random point is outside the convex hull.\n";
-            }
-        }
+        
 
         // Decrease the temperature
         temperature -= 1.0 / 0.95;
@@ -453,7 +456,7 @@ State aco_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtu
 
     // Initialize best state
     auto start_time = std::chrono::high_resolution_clock::now();
-    const int TIME_LIMIT = 500; // 8 minutes in seconds
+    const int TIME_LIMIT = 60; // 8 minutes in seconds
     State best_state;
     best_state.cdt = cdt;
     best_state.obtuse_count = initial_obtuse;
@@ -470,7 +473,7 @@ State aco_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtu
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time);
         if (duration.count() >= TIME_LIMIT)
         {
-            std::cout << "Time limit reached. Stopping local search." << std::endl;
+            std::cout << "Time limit reached. Stopping aco search." << std::endl;
             break;
         }
         std::vector<State> ant_solutions(K);
@@ -483,7 +486,7 @@ State aco_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtu
             int steps_without_improvement = 0;
 
             // Ant's solution construction
-            for (int step = 0; step < 100 && steps_without_improvement < 10; ++step)
+            for (int step = 0; step < 200 && steps_without_improvement < 50; ++step)
             {
                 // Find obtuse triangles
                 std::vector<CDT::Face_handle> obtuse_faces;
@@ -564,7 +567,9 @@ State aco_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtu
                         steps_without_improvement++;
                     }
                 }
-            }
+    }
+
+            
 
             ant_solutions[ant] = current_state;
 
@@ -576,6 +581,36 @@ State aco_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtu
                 stagnation_counter = 0;
                 best_state.obtuse_history.push_back(current_state.obtuse_count);
             }
+            if (steps_without_improvement >= 60 && randomization == true) {
+                Point random_point = generate_random_point_within_hull(convex_hull);
+                cout << "ACO Randomization triggered. Generated random point: (" << random_point.x() << ", " << random_point.y() << ")\n";
+
+                if (convex_hull.bounded_side(random_point) == CGAL::ON_BOUNDED_SIDE ||
+                convex_hull.bounded_side(random_point) == CGAL::ON_BOUNDARY)
+                {
+                 CDT::Vertex_handle v = current_state.cdt.insert(random_point);
+                if (v != CDT::Vertex_handle())
+                {
+                int new_obtuse_count = count_Obtuse_Angles(current_state.cdt);
+                best_state.steiner_points++;
+                best_state.steiner_locations.push_back(random_point);
+                best_state.obtuse_count = new_obtuse_count;
+                steps_without_improvement = 0;
+                best_state.obtuse_history.push_back(current_state.obtuse_count);
+                
+                cout << "steiner point counter: " << best_state.steiner_points << "\n";
+                cout << "ACO Random point accepted. New obtuse count: " << current_state.obtuse_count << "\n";
+                }
+                else
+                {
+                cout << "ACO Random point insertion failed.\n";
+                }
+            }
+            else
+            {
+            cout << "ACO Random point is outside the convex hull.\n";
+            }
+        }
         }
 
         // Update pheromones
@@ -943,7 +978,7 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
     std::cout << "Total execution time: " << duration.count() << " milliseconds" << std::endl;
-    //draw(best_overall_state.cdt);
+   
     return results;
     
 } 
