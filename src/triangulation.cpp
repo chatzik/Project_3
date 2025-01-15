@@ -387,7 +387,6 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
                 if (v != CDT::Vertex_handle())
                 {
                     new_state.obtuse_count = count_Obtuse_Angles(new_state.cdt);
-                    new_state.steiner_points++;
                     new_state.steiner_locations.push_back(steiner);
                     new_state.obtuse_history.push_back(new_state.obtuse_count);
                     // Compute the energy of the new state
@@ -395,9 +394,10 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
                     double delta_energy = new_energy - best_energy;
                     if (new_energy < best_energy)
                     {
-                    best_state = new_state;  // This will copy all fields, including steiner_points
+                    best_state.steiner_points++;  // This will increment the number of Steiner points in the best state
                     best_energy = new_energy;
                     best_cdt = new_state.cdt;
+                    best_state.steiner_locations.push_back(steiner);
                     best_state.obtuse_history.push_back(new_state.obtuse_count);
                     stagnation_count = 0; // Reset stagnation count
                     cout << "New best solution found with better energy: Obtuse Count = " << best_state.obtuse_count 
