@@ -53,7 +53,7 @@ if (j.contains("parameters")) {
     // Set default values or handle the absence of parameters
     alpha = 5.0;  // Example default value
     beta = 0.5;   // Example default value
-    L = 10000;     // Example default value
+    L = 1000;     // Example default value
     cout << "Warning: Parameters not found in JSON. Using default values." << endl;
 }
    // Check if delaunay exists

@@ -28,7 +28,7 @@ typedef CDT::Point Point;
 typedef CGAL::Polygon_2<K> Polygon_2;
 typedef CDT::Face_handle Face_handle;
 using namespace std;
-bool randomization = true;
+bool randomization = false;
 // State definition
 struct State
 {
@@ -130,7 +130,7 @@ State local_triangulation(CDT &initial_cdt, Polygon_2 &convex_hull, int &best_ob
     queue<State> queue;
     unordered_set<State, StateHash> visited; // Custom hash for State
     auto start_time = std::chrono::high_resolution_clock::now();
-    const int TIME_LIMIT = 500; // 8 minutes in seconds
+    const int TIME_LIMIT = 240; // 8 minutes in seconds
 
 
     // Initialize with the initial state
@@ -268,7 +268,7 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
     State current_state;
     current_state.cdt = cdt;
     auto start_time = std::chrono::high_resolution_clock::now();
-    const int TIME_LIMIT = 500; // 8 minutes in seconds
+    const int TIME_LIMIT = 240; // 4 minutes in seconds
     current_state.obtuse_count = initial_obtuse;
     current_state.steiner_points = 0;
     current_state.obtuse_history.push_back(initial_obtuse);
@@ -304,7 +304,7 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
         {
             //stagnation_count++;
     
-            if (stagnation_count >= 500 && randomization == true){
+            if (stagnation_count >= 100 && randomization == true){
                 
                 // Generate a random Steiner point
                 Point random_point = generate_random_point_within_hull(convex_hull);
@@ -395,8 +395,10 @@ State sa_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtus
                     if (new_energy < best_energy)
                     {
                     best_state.steiner_points++;  // This will increment the number of Steiner points in the best state
+                      // This will copy all fields, including steiner_points
                     best_energy = new_energy;
                     best_cdt = new_state.cdt;
+                    best_state.obtuse_count = count_Obtuse_Angles(best_cdt);
                     best_state.steiner_locations.push_back(steiner);
                     best_state.obtuse_history.push_back(new_state.obtuse_count);
                     stagnation_count = 0; // Reset stagnation count
@@ -486,7 +488,7 @@ State aco_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtu
             int steps_without_improvement = 0;
 
             // Ant's solution construction
-            for (int step = 0; step < 200 && steps_without_improvement < 50; ++step)
+            for (int step = 0; step < 200 && steps_without_improvement < 150; ++step)
             {
                 // Find obtuse triangles
                 std::vector<CDT::Face_handle> obtuse_faces;
@@ -581,7 +583,7 @@ State aco_triangulation(CDT &cdt, const Polygon_2 &convex_hull, int initial_obtu
                 stagnation_counter = 0;
                 best_state.obtuse_history.push_back(current_state.obtuse_count);
             }
-            if (steps_without_improvement >= 60 && randomization == true) {
+            if (steps_without_improvement >= 150 && randomization == true) {
                 Point random_point = generate_random_point_within_hull(convex_hull);
                 cout << "ACO Randomization triggered. Generated random point: (" << random_point.x() << ", " << random_point.y() << ")\n";
 
@@ -818,20 +820,39 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
         // κανουμε την μεθοδο sa
         if (method == "sa")
         {
+         State initial_state;
+        initial_state.cdt = cdt;
+        initial_state.obtuse_count = count_Obtuse_Angles(initial_state.cdt);
+        initial_state.steiner_points = 0;
+        initial_state.obtuse_history.push_back(best_obtuse);
+
+        State best_overall_state = initial_state;
+        CDT best_overall_cdt = cdt;
+   
             // για καλυτερα αποτελσματα την κανουμε 10 φορες και επιστεφουμε την καλυτερη
             for (int i = 0; i < 10; i++){
-                cout<< "SA iteration " << i << endl;
-                State current_best = sa_triangulation(cdt, convex_hull, best_obtuse, best_cdt, alpha, beta, L);
+                
 
+                cout<< "SA iteration " << i << endl;
+                State current_state = initial_state;
+                CDT current_cdt = initial_state.cdt;
+                State current_best = sa_triangulation(current_cdt, convex_hull, current_state.obtuse_count, best_cdt, alpha, beta, L);
+                best_obtuse = initial_state.obtuse_count;
+                best_cdt = initial_state.cdt;
+                if (i ==0) {
+                    best_overall_state = current_best;
+                    best_overall_cdt = current_best.cdt;
+                }
                 if (current_best.obtuse_count < best_overall_state.obtuse_count)
                 {
                     best_overall_state = current_best;
-                    best_cdt = current_best.cdt;
+                    best_overall_cdt = current_best.cdt;
                 }
                 if (current_best.obtuse_count == 0){
                     break;
                 }
             }
+            
             double total_convergence_rate = 0.0;
             int N = best_overall_state.obtuse_history.size();
             for (int n = 1; n < N; n++) {
@@ -857,11 +878,10 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
             // καλουμε την μεθοδο local
         cout << "SA New best solution found: Obtuse Count = " << best_overall_state.obtuse_count << "\n";
         cout << "steiner pont counter: " << best_overall_state.steiner_points << "\n"; 
-       method = "local";
         }
-    if (method == "local")
+        else if (method == "local")
         {
-            cout<< "Local" << endl;
+            
             State initial_state = {cdt, best_obtuse, 0, {}, {}, {count_Obtuse_Angles(cdt)}};
             best_overall_state = local_triangulation(cdt, convex_hull, best_obtuse, best_cdt, max_depth);
             best_cdt = best_overall_state.cdt;
@@ -890,9 +910,8 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
     }
     cout<< "steiner pont counter: " << best_overall_state.steiner_points << "\n"; 
     cout << "Local New best solution found: Obtuse Count = " << best_overall_state.obtuse_count << "\n";
-    method = "aco";   
-        } if (method == "aco") {
-            cout<< "Aco here"<< endl;
+        
+        } else if (method == "aco") {
             State initial_state = {cdt, best_obtuse, 0, {}, {}, {count_Obtuse_Angles(cdt)}};
             // ACO parameters
             int K = 10;  // Number of ants
