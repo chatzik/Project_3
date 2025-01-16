@@ -1,5 +1,5 @@
-/home/chatzos/project_3-master/build/CMakeFiles/rebuild_cache.dir
-/home/chatzos/project_3-master/build/CMakeFiles/edit_cache.dir
-/home/chatzos/project_3-master/build/CMakeFiles/triangulation.dir
-/home/chatzos/project_3-master/build/CMakeFiles/CGAL_Qt5_moc_and_resources.dir
-/home/chatzos/project_3-master/build/CMakeFiles/CGAL_Qt5_moc_and_resources_autogen.dir
+/home/t225/project3/Project_3/build/CMakeFiles/rebuild_cache.dir
+/home/t225/project3/Project_3/build/CMakeFiles/edit_cache.dir
+/home/t225/project3/Project_3/build/CMakeFiles/triangulation.dir
+/home/t225/project3/Project_3/build/CMakeFiles/CGAL_Qt5_moc_and_resources.dir
+/home/t225/project3/Project_3/build/CMakeFiles/CGAL_Qt5_moc_and_resources_autogen.dir

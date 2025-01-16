@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/chatzos/project_3-master
+CMAKE_SOURCE_DIR = /home/t225/project3/Project_3
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/chatzos/project_3-master/build
+CMAKE_BINARY_DIR = /home/t225/project3/Project_3/build
 
 # Utility rule file for CGAL_Qt5_moc_and_resources_autogen.
 
@@ -54,8 +54,8 @@ CMAKE_BINARY_DIR = /home/chatzos/project_3-master/build
 include CMakeFiles/CGAL_Qt5_moc_and_resources_autogen.dir/progress.make
 
 CMakeFiles/CGAL_Qt5_moc_and_resources_autogen:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/chatzos/project_3-master/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Automatic MOC for target CGAL_Qt5_moc_and_resources"
-	/usr/bin/cmake -E cmake_autogen /home/chatzos/project_3-master/build/CMakeFiles/CGAL_Qt5_moc_and_resources_autogen.dir/AutogenInfo.json ""
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/t225/project3/Project_3/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Automatic MOC for target CGAL_Qt5_moc_and_resources"
+	/usr/bin/cmake -E cmake_autogen /home/t225/project3/Project_3/build/CMakeFiles/CGAL_Qt5_moc_and_resources_autogen.dir/AutogenInfo.json ""
 
 CGAL_Qt5_moc_and_resources_autogen: CMakeFiles/CGAL_Qt5_moc_and_resources_autogen
 CGAL_Qt5_moc_and_resources_autogen: CMakeFiles/CGAL_Qt5_moc_and_resources_autogen.dir/build.make
@@ -72,6 +72,6 @@ CMakeFiles/CGAL_Qt5_moc_and_resources_autogen.dir/clean:
 .PHONY : CMakeFiles/CGAL_Qt5_moc_and_resources_autogen.dir/clean
 
 CMakeFiles/CGAL_Qt5_moc_and_resources_autogen.dir/depend:
-	cd /home/chatzos/project_3-master/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/chatzos/project_3-master /home/chatzos/project_3-master /home/chatzos/project_3-master/build /home/chatzos/project_3-master/build /home/chatzos/project_3-master/build/CMakeFiles/CGAL_Qt5_moc_and_resources_autogen.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/t225/project3/Project_3/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/t225/project3/Project_3 /home/t225/project3/Project_3 /home/t225/project3/Project_3/build /home/t225/project3/Project_3/build /home/t225/project3/Project_3/build/CMakeFiles/CGAL_Qt5_moc_and_resources_autogen.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/CGAL_Qt5_moc_and_resources_autogen.dir/depend
 
