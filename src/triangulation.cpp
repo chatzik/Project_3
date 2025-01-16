@@ -808,7 +808,7 @@ TriangulationResult triangulate(const vector<int> &points_x, const vector<int> &
 
         cout << "Input category: " << category << endl;
         delaunay = true;
-        if (category == "A" || category == "C" || category == "D")
+        if (category == "Β" || category == "C" || category == "D")
         {
             method = "sa";
         }
